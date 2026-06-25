@@ -41,6 +41,18 @@ def _has_overlap(query, start_at, end_at):
     ).first() is not None
 
 
+def _workslot_overlaps(slot, start_at, end_at):
+    slot_start = datetime.combine(slot.work_date, slot.start_time)
+    slot_end = datetime.combine(slot.work_date, slot.end_time)
+    return slot_start < end_at and slot_end > start_at
+
+
+def _blocked_by_planning(user_id, target_date, start_at, end_at):
+    slots = WorkSlot.query.filter_by(user_id=user_id, work_date=target_date).all()
+    blocking = [s for s in slots if s.status != 'present' and _workslot_overlaps(s, start_at, end_at)]
+    return len(blocking) > 0
+
+
 def _free_cabin(institute_id, treatment, start_at, end_at):
     cabins = Cabin.query.filter_by(institute_id=institute_id, is_active=True).order_by(Cabin.name).all()
     for cabin in cabins:
@@ -76,9 +88,10 @@ def slots_for_treatment(treatment, target_date):
             while current <= limit:
                 end_at = current + timedelta(minutes=treatment.duration_minutes)
                 busy_user = _has_overlap(Appointment.query.filter_by(user_id=skill.user_id), current, end_at)
+                blocked = _blocked_by_planning(skill.user_id, target_date, current, end_at)
                 cabin = _free_cabin(skill.user.institute_id, treatment, current, end_at)
 
-                if not busy_user and cabin:
+                if not busy_user and not blocked and cabin:
                     key = current.strftime('%H:%M')
                     slots_by_time.setdefault(key, {
                         'time': key,
