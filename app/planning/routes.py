@@ -25,4 +25,4 @@ def index():
     slots = WorkSlot.query.filter_by(work_date=selected_date).all()
     appointments = Appointment.query.filter(Appointment.start_at >= start_day, Appointment.start_at < end_day).order_by(Appointment.start_at).all()
     hours = list(range(8, 21))
-    return render_template('planning/index.html', users=users, cabins=cabins, slots=slots, appointments=appointments, selected_date=selected_date, prev_day=selected_date - timedelta(days=1), next_day=selected_date + timedelta(days=1), hours=hours)
+    return render_template('planning/pro.html', users=users, cabins=cabins, slots=slots, appointments=appointments, selected_date=selected_date, prev_day=selected_date - timedelta(days=1), next_day=selected_date + timedelta(days=1), hours=hours)
