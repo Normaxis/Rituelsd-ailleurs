@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ritual Manager</title>
+  <title>Rituels d'Ailleurs - Reservation et bien-etre</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
 <nav class="topbar">
-  <a class="brand" href="{{ url_for('public.home') }}">Ritual<span>Manager</span></a>
+  <a class="brand" href="{{ url_for('public.home') }}">Rituels <span>d'Ailleurs</span></a>
   <div class="navlinks">
     <a href="{{ url_for('public.home') }}">Accueil</a>
     <a href="{{ url_for('public.treatments') }}">Prestations</a>
-    <a href="{{ url_for('booking.choose_treatment') }}">Réserver</a>
-    <a href="{{ url_for('admin.dashboard') }}">Admin</a>
+    <a href="{{ url_for('booking.choose_treatment') }}">Reserver</a>
+    <a href="{{ url_for('admin.dashboard') }}">Espace equipe</a>
   </div>
 </nav>
 {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-wrap">{% for cat,msg in messages %}<div class="flash {{cat}}">{{ msg }}</div>{% endfor %}</div>{% endif %}{% endwith %}
