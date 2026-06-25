@@ -8,6 +8,31 @@ from app.models import Appointment, Cabin, SkillILU, Treatment, WorkSlot
 booking_bp = Blueprint('booking', __name__)
 
 
+def _normalize(value):
+    return (value or '').lower()
+
+
+def _is_duo_treatment(treatment):
+    text = _normalize(treatment.name + ' ' + treatment.category)
+    return 'duo' in text
+
+
+def _is_duo_cabin(cabin):
+    cabin_text = _normalize(cabin.name + ' ' + cabin.cabin_type)
+    institute_name = _normalize(cabin.institute.name if cabin.institute else '')
+    if 'petit rituel' in institute_name:
+        return True
+    if 'maroc' in cabin_text:
+        return True
+    return False
+
+
+def _cabin_matches_treatment(cabin, treatment):
+    if _is_duo_treatment(treatment):
+        return _is_duo_cabin(cabin)
+    return True
+
+
 def _has_overlap(query, start_at, end_at):
     return query.filter(
         Appointment.status == 'confirmed',
@@ -16,9 +41,11 @@ def _has_overlap(query, start_at, end_at):
     ).first() is not None
 
 
-def _free_cabin(institute_id, start_at, end_at):
+def _free_cabin(institute_id, treatment, start_at, end_at):
     cabins = Cabin.query.filter_by(institute_id=institute_id, is_active=True).order_by(Cabin.name).all()
     for cabin in cabins:
+        if not _cabin_matches_treatment(cabin, treatment):
+            continue
         busy = _has_overlap(Appointment.query.filter_by(cabin_id=cabin.id), start_at, end_at)
         if not busy:
             return cabin
@@ -49,7 +76,7 @@ def slots_for_treatment(treatment, target_date):
             while current <= limit:
                 end_at = current + timedelta(minutes=treatment.duration_minutes)
                 busy_user = _has_overlap(Appointment.query.filter_by(user_id=skill.user_id), current, end_at)
-                cabin = _free_cabin(skill.user.institute_id, current, end_at)
+                cabin = _free_cabin(skill.user.institute_id, treatment, current, end_at)
 
                 if not busy_user and cabin:
                     key = current.strftime('%H:%M')
