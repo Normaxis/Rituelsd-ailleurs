@@ -1,0 +1,1 @@
+{% extends 'admin/base_admin.html' %}{% block admin_content %}<h1>Journal d’audit</h1><table><tr><th>Date</th><th>Utilisateur</th><th>Module</th><th>Action</th></tr>{% for l in logs %}<tr><td>{{l.created_at}}</td><td>{{l.user.full_name if l.user else '-'}}</td><td>{{l.module}}</td><td>{{l.action}}</td></tr>{% endfor %}</table>{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Institut premium · Rouen</p>
+    <h1>Rituels d’Ailleurs & Le Petit Rituel</h1>
+    <p>Réservez un soin selon la disponibilité réelle des praticiennes, leurs compétences ILU et les cabines disponibles.</p>
+    <a class="btn" href="{{ url_for('booking.choose_treatment') }}">Prendre rendez-vous</a>
+  </div>
+  <div class="hero-card">Gestion complète : planning, ILU, stocks, routines, cabines.</div>
+</section>
+<section class="grid cards">
+{% for t in treatments[:3] %}<article class="card"><span>{{ t.category }}</span><h3>{{ t.name }}</h3><p>{{ t.duration_minutes }} min · {{ '%.0f'|format(t.price) }} €</p></article>{% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Ritual Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="admin-body">
+<aside class="sidebar">
+  <div class="brand admin-brand">Ritual<span>Manager</span></div>
+  <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+  <a href="{{ url_for('planning.index') }}">Planning</a>
+  <a href="{{ url_for('admin.treatments') }}">Prestations</a>
+  <a href="{{ url_for('admin.cabins') }}">Cabines</a>
+  <a href="{{ url_for('ilu.matrix') }}">ILU</a>
+  <a href="{{ url_for('stocks.index') }}">Stocks</a>
+  <a href="{{ url_for('routines.index') }}">Routines</a>
+  <a href="{{ url_for('admin.audit') }}">Audit</a>
+  <a href="{{ url_for('booking.choose_treatment') }}">Réservation client</a>
+  <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
+</aside>
+<section class="admin-main">{% block admin_content %}{% endblock %}</section>
+</body>
+</html>
