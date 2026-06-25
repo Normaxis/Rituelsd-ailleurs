@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnements virtuels
+.venv/
+venv/
+env/
+ENV/
+
+# Variables d'environnement
+.env
+.env.*
+!.env.example
+
+# Base locale / fichiers instance
+instance/
+*.sqlite
+*.sqlite3
+*.db
+
+# Flask
+.webassets-cache
+
+# Uploads locaux
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Tests / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
