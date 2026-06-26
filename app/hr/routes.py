@@ -1,16 +1,21 @@
 from datetime import date, datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import db
-from app.models import HabilitationRecord, Institute, Role, TrainingRecord, User, WorkSlot
+from app.models import Cabin, HabilitationRecord, Institute, Role, TrainingRecord, User, WorkSlot, WeeklyCabinSchedule, WeeklyUserSchedule
 from app.utils.auth import login_required
 
 hr_bp = Blueprint('hr', __name__)
 
+WEEKDAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+
+
 def parse_date(value):
     return datetime.strptime(value, '%Y-%m-%d').date() if value else None
 
+
 def parse_time(value):
     return datetime.strptime(value, '%H:%M').time() if value else None
+
 
 @hr_bp.route('/')
 @login_required
@@ -23,6 +28,7 @@ def dashboard():
     week_slots = WorkSlot.query.filter(WorkSlot.work_date >= today, WorkSlot.work_date <= today + timedelta(days=7)).order_by(WorkSlot.work_date, WorkSlot.start_time).all()
     return render_template('hr/dashboard.html', users=users, trainings_due=trainings_due, habilitations_due=habilitations_due, week_slots=week_slots, today=today)
 
+
 @hr_bp.route('/personnel', methods=['GET','POST'])
 @login_required
 def personnel():
@@ -33,7 +39,59 @@ def personnel():
         db.session.commit()
         flash('Salarie ajoute.', 'success')
         return redirect(url_for('hr.personnel'))
-    return render_template('hr/personnel.html', users=User.query.order_by(User.first_name, User.last_name).all(), roles=Role.query.all(), institutes=Institute.query.all())
+    users = User.query.order_by(User.first_name, User.last_name).all()
+    return render_template('hr/personnel.html', users=users, roles=Role.query.all(), institutes=Institute.query.all(), cabins=Cabin.query.order_by(Cabin.name).all(), user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), weekdays=WEEKDAYS)
+
+
+@hr_bp.route('/personnel/horaires-base', methods=['POST'])
+@login_required
+def add_user_base_schedule():
+    start_time = parse_time(request.form.get('start_time'))
+    end_time = parse_time(request.form.get('end_time'))
+    if not start_time or not end_time or end_time <= start_time:
+        flash('Horaire salarie invalide.', 'error')
+        return redirect(url_for('hr.personnel'))
+    item = WeeklyUserSchedule(user_id=int(request.form['user_id']), weekday=int(request.form['weekday']), start_time=start_time, end_time=end_time, status=request.form.get('status', 'present'), note=request.form.get('note', ''))
+    db.session.add(item)
+    db.session.commit()
+    flash('Horaire de base ajoute.', 'success')
+    return redirect(url_for('hr.personnel'))
+
+
+@hr_bp.route('/personnel/horaires-base/<int:item_id>/delete', methods=['POST'])
+@login_required
+def delete_user_base_schedule(item_id):
+    item = WeeklyUserSchedule.query.get_or_404(item_id)
+    db.session.delete(item)
+    db.session.commit()
+    flash('Horaire de base supprime.', 'success')
+    return redirect(url_for('hr.personnel'))
+
+
+@hr_bp.route('/personnel/dispos-cabines-base', methods=['POST'])
+@login_required
+def add_cabin_base_schedule():
+    start_time = parse_time(request.form.get('start_time'))
+    end_time = parse_time(request.form.get('end_time'))
+    if not start_time or not end_time or end_time <= start_time:
+        flash('Disponibilite cabine invalide.', 'error')
+        return redirect(url_for('hr.personnel'))
+    item = WeeklyCabinSchedule(cabin_id=int(request.form['cabin_id']), weekday=int(request.form['weekday']), start_time=start_time, end_time=end_time, status=request.form.get('status', 'available'), note=request.form.get('note', ''))
+    db.session.add(item)
+    db.session.commit()
+    flash('Disponibilite cabine de base ajoutee.', 'success')
+    return redirect(url_for('hr.personnel'))
+
+
+@hr_bp.route('/personnel/dispos-cabines-base/<int:item_id>/delete', methods=['POST'])
+@login_required
+def delete_cabin_base_schedule(item_id):
+    item = WeeklyCabinSchedule.query.get_or_404(item_id)
+    db.session.delete(item)
+    db.session.commit()
+    flash('Disponibilite cabine de base supprimee.', 'success')
+    return redirect(url_for('hr.personnel'))
+
 
 @hr_bp.route('/formations', methods=['GET','POST'])
 @login_required
@@ -49,6 +107,7 @@ def trainings():
         db.session.commit()
         return redirect(url_for('hr.trainings'))
     return render_template('hr/formations.html', records=TrainingRecord.query.order_by(TrainingRecord.expires_on).all(), users=User.query.order_by(User.first_name, User.last_name).all())
+
 
 @hr_bp.route('/habilitations', methods=['GET','POST'])
 @login_required
