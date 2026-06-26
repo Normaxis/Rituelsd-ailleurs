@@ -1,13 +1,13 @@
 {% extends 'admin/base_admin.html' %}
 {% block admin_content %}
 <style>
-.ilu-page{display:grid;gap:18px}.ilu-hero{background:linear-gradient(135deg,#fff8ef,#fff);border:1px solid #eadfd2;border-radius:20px;padding:22px;box-shadow:0 14px 36px rgba(45,32,20,.06)}.ilu-hero h1{margin:0;font-size:34px;letter-spacing:-.05em}.ilu-hero p{margin:8px 0 0;color:#7a6a5c;line-height:1.45}.ilu-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.ilu-kpi{background:#fff;border:1px solid #eadfd2;border-radius:16px;padding:16px}.ilu-kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.ilu-kpi strong{display:block;font-size:30px;margin-top:5px}.ilu-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.ilu-legend-card{background:#fff;border:1px solid #eadfd2;border-radius:16px;padding:14px}.ilu-legend-card b{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:12px;margin-right:8px;background:#f3eadf}.ilu-legend-card p{margin:8px 0 0;color:#7a6a5c;font-size:13px}.ilu-filters{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px;display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center}.ilu-filters select{min-height:42px;border:1px solid #e5d8ca;border-radius:12px;padding:0 10px;background:#fff}.ilu-filters button,.ilu-save{min-height:42px;border-radius:12px}.ilu-table-wrap{background:#fff;border:1px solid #eadfd2;border-radius:18px;overflow:auto;max-height:70vh}.ilu-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0}.ilu-table th,.ilu-table td{padding:10px;border-bottom:1px solid #f0e7dc;border-right:1px solid #f0e7dc;text-align:center;font-size:13px}.ilu-table th{position:sticky;top:0;background:#fff8ef;z-index:2;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#5d4a38}.ilu-table th:first-child,.ilu-table td:first-child{position:sticky;left:0;background:#fff;z-index:1;text-align:left;min-width:190px;font-weight:900}.ilu-table th:first-child{background:#fff8ef;z-index:3}.ilu-select{min-width:64px;border:1px solid #e5d8ca;border-radius:999px;padding:7px 8px;background:#fff;font-weight:900;text-align:center}.ilu-actions{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.ilu-help{color:#7a6a5c;font-size:13px}.ilu-save{padding:0 18px;font-weight:900}@media(max-width:900px){.ilu-kpis,.ilu-legend,.ilu-filters{grid-template-columns:1fr}}
+.ilu-page{display:grid;gap:18px}.ilu-hero{background:linear-gradient(135deg,#fff8ef,#fff);border:1px solid #eadfd2;border-radius:22px;padding:22px;box-shadow:0 14px 36px rgba(45,32,20,.06)}.ilu-hero h1{margin:0;font-size:34px;letter-spacing:-.05em}.ilu-hero p{margin:8px 0 0;color:#7a6a5c;line-height:1.45}.ilu-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.ilu-kpi{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px}.ilu-kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.ilu-kpi strong{display:block;font-size:30px;margin-top:5px}.ilu-legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.ilu-legend-card{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:14px;box-shadow:0 10px 28px rgba(45,32,20,.04)}.ilu-legend-card b{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:14px;margin-right:8px;font-size:18px}.ilu-legend-card p{margin:8px 0 0;color:#7a6a5c;font-size:13px}.ilu-i b,.level-i{background:#fff1d9!important;color:#8a4b00!important;border-color:#f0bf78!important}.ilu-l b,.level-l{background:#e4f4eb!important;color:#23573a!important;border-color:#9fd0b5!important}.ilu-u b,.level-u{background:#efe8ff!important;color:#4a347d!important;border-color:#b9a3ea!important}.ilu-empty b,.level-empty{background:#f2f0ee!important;color:#77685d!important;border-color:#ddd3c9!important}.ilu-filters{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px;display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:center}.ilu-filters select{min-height:42px;border:1px solid #e5d8ca;border-radius:12px;padding:0 10px;background:#fff}.ilu-filters button,.ilu-save{min-height:42px;border-radius:12px}.ilu-table-wrap{background:#fff;border:1px solid #eadfd2;border-radius:20px;overflow:auto;max-height:70vh;box-shadow:0 14px 36px rgba(45,32,20,.05)}.ilu-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0}.ilu-table th,.ilu-table td{padding:9px;border-bottom:1px solid #f0e7dc;border-right:1px solid #f0e7dc;text-align:center;font-size:13px}.ilu-table th{position:sticky;top:0;background:#fff8ef;z-index:2;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#5d4a38;min-width:150px}.ilu-table th:first-child,.ilu-table td:first-child{position:sticky;left:0;background:#fff;z-index:1;text-align:left;min-width:210px;font-weight:900}.ilu-table th:first-child{background:#fff8ef;z-index:3}.ilu-table td.level-cell{transition:background .15s ease}.ilu-table td.cell-i{background:#fff8eb}.ilu-table td.cell-l{background:#f0faf4}.ilu-table td.cell-u{background:#f6f1ff}.ilu-table td.cell-empty{background:#fff}.ilu-select{min-width:72px;border:1px solid #e5d8ca;border-radius:999px;padding:8px 10px;background:#fff;font-weight:1000;text-align:center;box-shadow:0 6px 16px rgba(45,32,20,.05);cursor:pointer}.ilu-select.level-i{box-shadow:0 0 0 3px rgba(240,191,120,.22)}.ilu-select.level-l{box-shadow:0 0 0 3px rgba(159,208,181,.25)}.ilu-select.level-u{box-shadow:0 0 0 3px rgba(185,163,234,.28)}.ilu-actions{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:14px}.ilu-help{color:#7a6a5c;font-size:13px;margin:0}.ilu-save{padding:0 18px;font-weight:900}.ilu-mini{display:flex;gap:8px;flex-wrap:wrap}.ilu-chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 10px;font-weight:900;font-size:12px;border:1px solid #eadfd2;background:#fff}@media(max-width:1000px){.ilu-kpis,.ilu-legend{grid-template-columns:1fr 1fr}.ilu-filters{grid-template-columns:1fr}}@media(max-width:620px){.ilu-kpis,.ilu-legend{grid-template-columns:1fr}}
 </style>
 <section class="ilu-page">
   <div class="ilu-hero">
     <p class="eyebrow">Competences praticiennes</p>
     <h1>Matrice ILU</h1>
-    <p>La matrice ILU permet de definir quelles praticiennes peuvent realiser quelles prestations. Elle alimente la reservation client et evite de proposer un soin a une personne non formee.</p>
+    <p>La matrice ILU definit quelles praticiennes peuvent realiser quelles prestations. Elle alimente la reservation client et evite de proposer un soin a une personne non formee.</p>
   </div>
 
   <div class="ilu-kpis">
@@ -17,9 +17,10 @@
   </div>
 
   <div class="ilu-legend">
-    <article class="ilu-legend-card"><b>I</b><strong>Initiee / non reservable</strong><p>La prestation ne doit pas etre proposee automatiquement a cette personne.</p></article>
-    <article class="ilu-legend-card"><b>L</b><strong>Autonome</strong><p>La personne peut etre reservee sur cette prestation.</p></article>
-    <article class="ilu-legend-card"><b>U</b><strong>Experte / referente</strong><p>Niveau confirme, utile pour les prestations techniques ou prioritaires.</p></article>
+    <article class="ilu-legend-card ilu-empty"><b>-</b><strong>Non defini</strong><p>Aucun niveau renseigne pour le moment.</p></article>
+    <article class="ilu-legend-card ilu-i"><b>I</b><strong>Initiee</strong><p>Non reservable automatiquement.</p></article>
+    <article class="ilu-legend-card ilu-l"><b>L</b><strong>Autonome</strong><p>Reservable sur cette prestation.</p></article>
+    <article class="ilu-legend-card ilu-u"><b>U</b><strong>Experte</strong><p>Referente ou niveau confirme.</p></article>
   </div>
 
   <form class="ilu-filters" method="get">
@@ -36,16 +37,32 @@
         <tr>
           <td>{{ u.full_name }}</td>
           {% for t in treatments %}
-          <td><select class="ilu-select" name="level_{{ u.id }}_{{ t.id }}"><option value="" {% if skills.get((u.id,t.id),'')=='' %}selected{% endif %}>-</option>{% for l in ['I','L','U'] %}<option value="{{ l }}" {% if skills.get((u.id,t.id),'')==l %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></td>
+          {% set current_level = skills.get((u.id,t.id),'') %}
+          <td class="level-cell"><select class="ilu-select" name="level_{{ u.id }}_{{ t.id }}" data-level="{{ current_level }}"><option value="" {% if current_level=='' %}selected{% endif %}>-</option>{% for l in ['I','L','U'] %}<option value="{{ l }}" {% if current_level==l %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></td>
           {% endfor %}
         </tr>
         {% endfor %}
       </table>
     </div>
     <div class="ilu-actions">
-      <p class="ilu-help">Seuls les niveaux L et U rendent une prestation reservable automatiquement.</p>
+      <div><p class="ilu-help">Seuls les niveaux <b>L</b> et <b>U</b> rendent une prestation reservable automatiquement.</p><div class="ilu-mini"><span class="ilu-chip level-i">I · non reservable</span><span class="ilu-chip level-l">L · reservable</span><span class="ilu-chip level-u">U · expert</span></div></div>
       <button class="btn ilu-save">Enregistrer la matrice</button>
     </div>
   </form>
 </section>
+<script>
+(function(){
+  function applyLevel(select){
+    var value=(select.value||'').toLowerCase();
+    var cell=select.closest('td');
+    select.classList.remove('level-i','level-l','level-u','level-empty');
+    if(cell){cell.classList.remove('cell-i','cell-l','cell-u','cell-empty');}
+    if(value==='i'){select.classList.add('level-i'); if(cell){cell.classList.add('cell-i');}}
+    else if(value==='l'){select.classList.add('level-l'); if(cell){cell.classList.add('cell-l');}}
+    else if(value==='u'){select.classList.add('level-u'); if(cell){cell.classList.add('cell-u');}}
+    else{select.classList.add('level-empty'); if(cell){cell.classList.add('cell-empty');}}
+  }
+  document.querySelectorAll('.ilu-select').forEach(function(select){applyLevel(select);select.addEventListener('change',function(){applyLevel(select);});});
+})();
+</script>
 {% endblock %}
