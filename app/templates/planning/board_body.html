@@ -1,123 +1,129 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/planning.css') }}">
 
-<section class="planning-pro-page" data-date="{{ selected_date.isoformat() }}" data-view="{{ selected_view }}">
-  <div class="planning-pro-title">
+<section class="planning-premium" data-date="{{ selected_date.isoformat() }}" data-view="{{ selected_view }}">
+  <header class="planner-hero">
     <div>
-      <p class="eyebrow">Planning</p>
-      <h1>Planning du {{ selected_date.strftime('%d/%m/%Y') }}</h1>
-      <p class="muted">Vue professionnelle par praticiennes ou par cabines. Cliquez dans le planning pour creer un rendez-vous, glissez un bloc pour le deplacer.</p>
+      <p class="eyebrow">Planning opérationnel</p>
+      <h1>{{ selected_date.strftime('%A %d %B %Y')|capitalize }}</h1>
+      <p class="muted">Agenda professionnel avec vue par praticiennes ou par cabines, création directe au clic et déplacement des rendez-vous par glisser-déposer.</p>
     </div>
-    <div class="planning-actions-top">
-      <a class="btn ghost" href="{{ url_for('planning.index', date=prev_day.isoformat(), view=selected_view) }}">Jour precedent</a>
+    <div class="hero-actions">
+      <a class="btn ghost" href="{{ url_for('planning.index', date=prev_day.isoformat(), view=selected_view) }}">← Jour précédent</a>
       <form method="get" class="date-form"><input type="hidden" name="view" value="{{ selected_view }}"><input type="date" name="date" value="{{ selected_date.isoformat() }}"><button>Afficher</button></form>
-      <a class="btn ghost" href="{{ url_for('planning.index', date=next_day.isoformat(), view=selected_view) }}">Jour suivant</a>
+      <a class="btn ghost" href="{{ url_for('planning.index', date=next_day.isoformat(), view=selected_view) }}">Jour suivant →</a>
+      <button type="button" class="btn new-rdv-trigger">Nouveau rendez-vous</button>
     </div>
-  </div>
+  </header>
 
-  <div class="planning-view-switch">
-    <a class="{{ 'active' if selected_view=='user' }}" href="{{ url_for('planning.index', date=selected_date.isoformat(), view='user') }}">Praticiennes</a>
-    <a class="{{ 'active' if selected_view=='cabin' }}" href="{{ url_for('planning.index', date=selected_date.isoformat(), view='cabin') }}">Cabines</a>
-  </div>
-
-  <div class="planner-layout-pro">
-    <aside class="planner-side-panel">
-      <section class="planner-card mini-calendar-card">
-        <div class="mini-calendar-head"><h2>{{ selected_date.strftime('%B %Y')|capitalize }}</h2><small>{{ selected_date.strftime('%A %d/%m')|capitalize }}</small></div>
+  <div class="planner-app-shell">
+    <aside class="planner-utility">
+      <section class="utility-card calendar-card">
+        <div class="calendar-card-head">
+          <div><span>Mois</span><h2>{{ selected_date.strftime('%B %Y')|capitalize }}</h2></div>
+          <a href="{{ url_for('planning.index', date=selected_date.isoformat(), view=selected_view) }}">Aujourd'hui</a>
+        </div>
         <div class="mini-weekdays"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
         <div class="mini-month-grid">
-          {% for week in month_weeks %}{% for day in week %}<a class="mini-day {{ 'outside' if day.outside }} {{ 'today' if day.today }} {{ 'selected' if day.selected }}" href="{{ url_for('planning.index', date=day.date.isoformat(), view=selected_view) }}"><b>{{ day.date.day }}</b><small>{{ ['L','M','M','J','V','S','D'][day.date.weekday()] }}</small></a>{% endfor %}{% endfor %}
+          {% for week in month_weeks %}{% for day in week %}
+          <a class="mini-day {{ 'outside' if day.outside }} {{ 'today' if day.today }} {{ 'selected' if day.selected }}" href="{{ url_for('planning.index', date=day.date.isoformat(), view=selected_view) }}"><b>{{ day.date.day }}</b><small>{{ ['L','M','M','J','V','S','D'][day.date.weekday()] }}</small></a>
+          {% endfor %}{% endfor %}
         </div>
       </section>
 
-      <section class="planner-card legend-card">
-        <h2>Filtres rapides</h2>
-        <div class="legend-list">
-          <span><i class="swatch rdv"></i> Rendez-vous confirmes</span>
-          <span><i class="swatch present"></i> Presence</span>
-          <span><i class="swatch training"></i> Formation</span>
-          <span><i class="swatch holiday"></i> Conge / repos</span>
-          <span><i class="swatch completed"></i> Realise</span>
-          <span><i class="swatch cancelled"></i> Annule</span>
+      <section class="utility-card filters-card">
+        <div class="utility-title"><h2>Filtres rapides</h2><a href="{{ url_for('planning.index', date=selected_date.isoformat(), view=selected_view) }}">Réinitialiser</a></div>
+        <label><input type="checkbox" checked> Rendez-vous confirmés</label>
+        <label><input type="checkbox" checked> Présences</label>
+        <label><input type="checkbox" checked> Absences / congés</label>
+        <label><input type="checkbox" checked> Formations</label>
+        <div class="legend-list compact">
+          <span><i class="swatch rdv"></i> RDV</span><span><i class="swatch present"></i> Présence</span><span><i class="swatch training"></i> Formation</span><span><i class="swatch holiday"></i> Absence</span>
         </div>
-        <p class="muted small-note">Le planning client reste controle par les presences, les competences ILU et les cabines libres.</p>
       </section>
 
-      <section class="planner-card workslot-card">
-        <h2>Ajouter une presence / absence</h2>
-        <form class="planning-form-side" method="post">
-          <select name="user_id">{% for u in users %}<option value="{{u.id}}">{{u.full_name}}</option>{% endfor %}</select>
-          <input type="date" name="work_date" value="{{selected_date.isoformat()}}">
-          <div class="time-row"><input type="time" name="start_time" value="09:00"><input type="time" name="end_time" value="17:00"></div>
-          <select name="status"><option value="present">Presence</option><option value="off">Repos</option><option value="holiday">Conge</option><option value="training">Formation</option></select>
-          <input name="note" placeholder="Note">
-          <button>Ajouter</button>
-        </form>
+      <section class="utility-card workslot-card">
+        <details>
+          <summary>Ajouter présence / absence</summary>
+          <form class="planning-form-side" method="post">
+            <select name="user_id">{% for u in users %}<option value="{{u.id}}">{{u.full_name}}</option>{% endfor %}</select>
+            <input type="date" name="work_date" value="{{selected_date.isoformat()}}">
+            <div class="time-row"><input type="time" name="start_time" value="09:00"><input type="time" name="end_time" value="17:00"></div>
+            <select name="status"><option value="present">Présence</option><option value="off">Repos</option><option value="holiday">Congé</option><option value="training">Formation</option></select>
+            <input name="note" placeholder="Note">
+            <button>Ajouter</button>
+          </form>
+        </details>
       </section>
     </aside>
 
-    <main class="scheduler-main-pro">
-      <div class="scheduler-toolbar-pro">
-        <div>
-          <h2>{{ 'Vue praticiennes' if selected_view=='user' else 'Vue cabines' }}</h2>
-          <p class="muted">{{ scheduler_start_hour }}h - {{ scheduler_end_hour }}h · pas de 30 minutes</p>
+    <main class="planner-main-stage">
+      <div class="planning-topbar">
+        <div class="segmented-control">
+          <a class="{{ 'active' if selected_view=='user' }}" href="{{ url_for('planning.index', date=selected_date.isoformat(), view='user') }}">Praticiennes</a>
+          <a class="{{ 'active' if selected_view=='cabin' }}" href="{{ url_for('planning.index', date=selected_date.isoformat(), view='cabin') }}">Cabines</a>
         </div>
-        <div class="toolbar-badges"><span>Glisser-deposer</span><span>Creation directe</span><span>Ressources</span></div>
+        <div class="view-control"><span class="active">Jour</span><span>Semaine</span><span>Mois</span></div>
+        <div class="planning-status"><span>{{ board_resources|length }} ressources</span><span>{{ appointments|length }} rendez-vous</span></div>
       </div>
 
-      <div class="calendar-board-wrap">
-        <div class="calendar-board" style="--cols: {{ board_resources|length if board_resources else 1 }}; --slots: {{ time_slots|length }};">
-          <div class="time-column">
-            <div class="time-header">Heure</div>
-            <div class="time-track">
-              {% for marker in time_markers %}<div class="time-marker" style="top:{{ marker.top }}%">{{ marker.label }}</div>{% endfor %}
+      <div class="scheduler-frame">
+        <div class="scheduler-scroll-area">
+          <div class="calendar-board-premium" style="--cols: {{ board_resources|length if board_resources else 1 }}; --slots: {{ time_slots|length }};">
+            <div class="time-axis">
+              <div class="axis-head">Heure</div>
+              <div class="axis-track">
+                {% for marker in time_markers %}<div class="axis-marker" style="top:{{ marker.top }}%"><span>{{ marker.label }}</span></div>{% endfor %}
+              </div>
+            </div>
+
+            <div class="resource-board">
+              {% for resource in board_resources %}
+              <section class="premium-resource" data-resource-id="{{ resource.id }}" data-resource-type="{{ resource.type }}">
+                <header class="premium-resource-head">
+                  <div class="resource-avatar">{{ resource.name[:1] }}</div>
+                  <div class="resource-text"><b>{{ resource.name }}</b><span>{{ resource.subtitle }}</span></div>
+                  <small>{{ resource.blocks|length }}</small>
+                </header>
+                <div class="premium-track">
+                  <div class="slot-grid">
+                    {% for slot in time_slots %}<button type="button" class="slot-drop" data-resource-type="{{ resource.type }}" data-resource-id="{{ resource.id }}" data-time="{{ slot.time }}" title="Créer à {{ slot.time }}"></button>{% endfor %}
+                  </div>
+                  {% for block in resource.blocks %}
+                  <article class="appointment-card-premium block-{{ block.kind|replace(' ', '-') }} {{ 'is-event' if block.appointment or block.slot }}" style="top:{{ block.top }}%;height:{{ block.height }}%;" {% if block.appointment %}draggable="true" data-event-type="appointment" data-event-id="{{ block.appointment.id }}"{% elif block.slot %}draggable="true" data-event-type="slot" data-event-id="{{ block.slot.id }}"{% endif %}>
+                    <span class="grabber">⋮⋮</span>
+                    <span class="block-hour">{{ block.time }}</span>
+                    <b>{{ block.title }}</b>
+                    <small>{{ block.subtitle }}</small>
+                  </article>
+                  {% endfor %}
+                </div>
+              </section>
+              {% else %}<div class="empty-board">Aucune ressource active.</div>{% endfor %}
             </div>
           </div>
-
-          <div class="resource-columns">
-            {% for resource in board_resources %}
-            <section class="resource-column" data-resource-id="{{ resource.id }}" data-resource-type="{{ resource.type }}">
-              <header class="resource-header-pro">
-                <div class="avatar-dot">{{ resource.name[:1] }}</div>
-                <div><b>{{ resource.name }}</b><span>{{ resource.subtitle }}</span></div>
-              </header>
-              <div class="resource-track">
-                <div class="slot-grid">
-                  {% for slot in time_slots %}<button type="button" class="slot-drop" data-resource-type="{{ resource.type }}" data-resource-id="{{ resource.id }}" data-time="{{ slot.time }}" title="Creer a {{ slot.time }}"></button>{% endfor %}
-                </div>
-                {% for block in resource.blocks %}
-                <article class="planning-block block-{{ block.kind|replace(' ', '-') }} {{ 'is-event' if block.appointment or block.slot }}" style="top:{{ block.top }}%;height:{{ block.height }}%;" {% if block.appointment %}draggable="true" data-event-type="appointment" data-event-id="{{ block.appointment.id }}"{% elif block.slot %}draggable="true" data-event-type="slot" data-event-id="{{ block.slot.id }}"{% endif %}>
-                  <span class="block-hour">{{ block.time }}</span>
-                  <b>{{ block.title }}</b>
-                  <small>{{ block.subtitle }}</small>
-                </article>
-                {% endfor %}
-              </div>
-            </section>
-            {% else %}
-            <div class="empty-board">Aucune ressource active.</div>
-            {% endfor %}
-          </div>
         </div>
       </div>
-      <p class="scheduler-hint">Glissez-deposez un rendez-vous pour changer l'heure ou la ressource. Cliquez sur un creneau vide pour pre-remplir le formulaire a droite.</p>
+      <p class="scheduler-hint">Cliquez dans une case vide pour préparer un rendez-vous. Glissez un bloc vers une autre case pour le déplacer.</p>
     </main>
-
-    <aside class="create-panel-pro">
-      <section class="planner-card create-card">
-        <div class="create-card-head"><h2>Nouveau rendez-vous</h2><span id="selectedSlotLabel">{{ selected_date.strftime('%d/%m/%Y') }}</span></div>
-        <form method="post" action="{{ url_for('planning.create_appointment') }}" id="planningCreateForm" class="create-rdv-form">
-          <input type="hidden" name="view" value="{{ selected_view }}">
-          <label>Date</label><input type="date" name="date" id="createDate" value="{{ selected_date.isoformat() }}" required>
-          <label>Heure de debut</label><input type="time" name="time" id="createTime" value="09:00" required>
-          <label>Client</label><input name="customer_name" placeholder="Nom du client" required><input name="customer_email" placeholder="Email de confirmation">
-          <label>Prestation</label><select name="treatment_id" required>{% for t in treatments %}<option value="{{ t.id }}">{{ t.name }} - {{ t.duration_minutes }} min - {{ '%.0f'|format(t.price) }} euros</option>{% endfor %}</select>
-          <label>Praticienne</label><select name="user_id" id="createUser" required>{% for u in users %}<option value="{{ u.id }}">{{ u.full_name }}</option>{% endfor %}</select>
-          <label>Cabine</label><select name="cabin_id" id="createCabin" required>{% for c in cabins %}<option value="{{ c.id }}">{{ c.name }} - {{ c.cabin_type }}</option>{% endfor %}</select>
-          <button>Enregistrer</button>
-        </form>
-      </section>
-    </aside>
   </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="appointment-drawer" id="appointmentDrawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div><p class="eyebrow">Création rapide</p><h2>Nouveau rendez-vous</h2><span id="selectedSlotLabel">{{ selected_date.strftime('%d/%m/%Y') }}</span></div>
+      <button type="button" class="drawer-close" id="drawerClose">×</button>
+    </div>
+    <form method="post" action="{{ url_for('planning.create_appointment') }}" id="planningCreateForm" class="drawer-form">
+      <input type="hidden" name="view" value="{{ selected_view }}">
+      <label>Date</label><input type="date" name="date" id="createDate" value="{{ selected_date.isoformat() }}" required>
+      <label>Heure de début</label><input type="time" name="time" id="createTime" value="09:00" required>
+      <label>Client</label><input name="customer_name" placeholder="Nom du client" required><input name="customer_email" placeholder="Email de confirmation">
+      <label>Prestation</label><select name="treatment_id" required>{% for t in treatments %}<option value="{{ t.id }}">{{ t.name }} - {{ t.duration_minutes }} min - {{ '%.0f'|format(t.price) }} euros</option>{% endfor %}</select>
+      <label>Praticienne</label><select name="user_id" id="createUser" required>{% for u in users %}<option value="{{ u.id }}">{{ u.full_name }}</option>{% endfor %}</select>
+      <label>Cabine</label><select name="cabin_id" id="createCabin" required>{% for c in cabins %}<option value="{{ c.id }}">{{ c.name }} - {{ c.cabin_type }}</option>{% endfor %}</select>
+      <div class="drawer-actions"><button type="submit">Enregistrer</button><button type="submit" name="again" value="1" class="secondary">Enregistrer et créer un autre</button></div>
+    </form>
+  </aside>
 </section>
 
 <script src="{{ url_for('static', filename='js/planning.js') }}"></script>
