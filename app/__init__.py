@@ -18,6 +18,7 @@ def create_app():
     from app.stocks.routes import stocks_bp
     from app.routines.routes import routines_bp
     from app.hr.routes import hr_bp
+    from app.customers.routes import customers_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -28,6 +29,7 @@ def create_app():
     app.register_blueprint(stocks_bp, url_prefix='/admin/stocks')
     app.register_blueprint(routines_bp, url_prefix='/admin/routines')
     app.register_blueprint(hr_bp, url_prefix='/admin/rh')
+    app.register_blueprint(customers_bp, url_prefix='/admin/clients')
 
     with app.app_context():
         db.create_all()
