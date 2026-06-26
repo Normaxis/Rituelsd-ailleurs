@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for
 from app.extensions import db
-from app.models import Treatment, Cabin, User, AuditLog, Institute, DocumentRecord, QSEAction, Product, Customer, GiftCard, Supplier
+from app.models import Treatment, Cabin, User, AuditLog, Institute, DocumentRecord, QSEAction, Product, Customer, GiftCard, Supplier, Appointment, HabilitationRecord, TrainingRecord
 from app.utils.auth import login_required, current_user
 
 admin_bp = Blueprint('admin', __name__)
@@ -12,7 +12,19 @@ def parse_date(value):
 @admin_bp.route('/')
 @login_required
 def dashboard():
-    return render_template('admin/dashboard.html', treatments=Treatment.query.count(), cabins=Cabin.query.count(), users=User.query.count(), customers=Customer.query.count(), giftcards=GiftCard.query.count(), suppliers=Supplier.query.count(), documents=DocumentRecord.query.count(), qse_actions=QSEAction.query.count(), low_stock=Product.query.filter(Product.quantity <= Product.alert_threshold).count())
+    today = date.today()
+    start = datetime.combine(today, datetime.min.time())
+    end = start + timedelta(days=1)
+    soon = today + timedelta(days=60)
+    today_appointments = Appointment.query.filter(Appointment.start_at >= start, Appointment.start_at < end).order_by(Appointment.start_at).all()
+    today_revenue = sum(a.treatment.price or 0 for a in today_appointments if a.status != 'cancelled')
+    low_stock = Product.query.filter(Product.quantity <= Product.alert_threshold).count()
+    giftcards_expiring = GiftCard.query.filter(GiftCard.expires_on != None, GiftCard.expires_on <= soon, GiftCard.status == 'active').count()
+    habilitations_due = HabilitationRecord.query.filter(HabilitationRecord.expires_on != None, HabilitationRecord.expires_on <= soon).count()
+    trainings_due = TrainingRecord.query.filter(TrainingRecord.expires_on != None, TrainingRecord.expires_on <= soon).count()
+    open_qse = QSEAction.query.filter(QSEAction.status != 'closed').count()
+    late_qse = QSEAction.query.filter(QSEAction.status != 'closed', QSEAction.due_date != None, QSEAction.due_date < today).count()
+    return render_template('admin/dashboard.html', treatments=Treatment.query.count(), cabins=Cabin.query.count(), users=User.query.count(), customers=Customer.query.count(), giftcards=GiftCard.query.count(), suppliers=Supplier.query.count(), documents=DocumentRecord.query.count(), qse_actions=QSEAction.query.count(), low_stock=low_stock, today_appointments=today_appointments, today_revenue=today_revenue, giftcards_expiring=giftcards_expiring, habilitations_due=habilitations_due, trainings_due=trainings_due, open_qse=open_qse, late_qse=late_qse)
 
 @admin_bp.route('/prestations', methods=['GET','POST'])
 @login_required
