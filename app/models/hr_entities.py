@@ -2,6 +2,39 @@ from datetime import date
 from app.extensions import db
 
 
+class WeeklyUserSchedule(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    weekday = db.Column(db.Integer, nullable=False)  # 0 lundi, 6 dimanche
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    status = db.Column(db.String(40), default='present')
+    note = db.Column(db.String(255), default='')
+    user = db.relationship('User')
+
+
+class WeeklyCabinSchedule(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cabin_id = db.Column(db.Integer, db.ForeignKey('cabin.id'), nullable=False)
+    weekday = db.Column(db.Integer, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    status = db.Column(db.String(40), default='available')
+    note = db.Column(db.String(255), default='')
+    cabin = db.relationship('Cabin')
+
+
+class CabinAvailabilitySlot(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cabin_id = db.Column(db.Integer, db.ForeignKey('cabin.id'), nullable=False)
+    work_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    status = db.Column(db.String(40), default='available')
+    note = db.Column(db.String(255), default='')
+    cabin = db.relationship('Cabin')
+
+
 class TrainingRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
