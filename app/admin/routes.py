@@ -42,16 +42,16 @@ def cabins():
 @login_required
 def documents():
     if request.method == 'POST':
-        doc = DocumentRecord(title=request.form['title'], category=request.form.get('category','Procedure'), version=request.form.get('version','1.0'), owner=request.form.get('owner',''), file_url=request.form.get('file_url',''), review_date=parse_date(request.form.get('review_date')))
-        db.session.add(doc); db.session.commit()
+        item = DocumentRecord(title=request.form['title'], category=request.form.get('category','Procedure'), version=request.form.get('version','1.0'), owner=request.form.get('owner',''), file_url=request.form.get('file_url',''), review_date=parse_date(request.form.get('review_date')))
+        db.session.add(item); db.session.commit()
         return redirect(url_for('admin.documents'))
-    return render_template('documents/index.html', docs=DocumentRecord.query.order_by(DocumentRecord.created_at.desc()).all())
+    return render_template('ged/index.html', items=DocumentRecord.query.order_by(DocumentRecord.created_at.desc()).all())
 
 @admin_bp.route('/documents/<int:doc_id>')
 @login_required
 def document_detail(doc_id):
-    doc = DocumentRecord.query.get_or_404(doc_id)
-    return render_template('documents/detail.html', doc=doc)
+    item = DocumentRecord.query.get_or_404(doc_id)
+    return render_template('ged/detail.html', item=item)
 
 @admin_bp.route('/qse')
 @login_required
