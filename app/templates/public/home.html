@@ -1,1 +1,63 @@
-{% extends 'base.html' %}{% block content %}<link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}"><section class="client-hero"><div><p class="eyebrow">Instituts de massage a Rouen</p><h1>Rituels d'Ailleurs</h1><p>Un moment de calme, de soin et de deconnexion. Choisissez votre rituel, consultez les disponibilites en temps reel et reservez votre rendez-vous en quelques clics.</p><div class="hero-buttons"><a class="btn" href="{{ url_for('booking.choose_treatment') }}">Prendre rendez-vous</a><a class="btn ghost" href="{{ url_for('public.treatments') }}">Decouvrir les soins</a></div></div><div class="hero-visual"><span class="hero-badge">Rituels d'Ailleurs + Le Petit Rituel</span><strong>Massages, soins visage et rituels bien-etre.</strong><small>Reservation simple, disponibilites reelles, accueil personnalise.</small></div></section><section class="trust-row"><article class="trust-card"><b>2</b><span>instituts a Rouen</span></article><article class="trust-card"><b>30 s</b><span>pour trouver un creneau</span></article><article class="trust-card"><b>Sur mesure</b><span>soins adaptes a votre besoin</span></article></section><section class="client-section"><p class="eyebrow">Comment reserver</p><h2>Un parcours simple et rassurant.</h2><p>La reservation se fait en trois etapes : vous choisissez une prestation, un jour disponible, puis un horaire. Le planning interne attribue automatiquement la praticienne et la cabine adaptees.</p><div class="steps"><article class="step-card"><span>1</span><h3>Choisissez le soin</h3><p>Massage, soin visage, rituel solo ou duo.</p></article><article class="step-card"><span>2</span><h3>Voyez les jours libres</h3><p>Le calendrier affiche uniquement les jours reservables.</p></article><article class="step-card"><span>3</span><h3>Validez l'horaire</h3><p>Selectionnez le creneau qui vous convient.</p></article><article class="step-card"><span>4</span><h3>Profitez</h3><p>Votre rendez-vous est confirme immediatement.</p></article></div></section><section class="client-section"><p class="eyebrow">Prestations populaires</p><h2>Decouvrir nos rituels</h2><div class="treatment-grid">{% for t in treatments[:3] %}<article class="client-card"><span>{{ t.category }}</span><h3>{{ t.name }}</h3><p>{{ t.duration_minutes }} min</p><p class="price">{{ '%.0f'|format(t.price) }} euros</p><a class="btn small" href="{{ url_for('booking.month_calendar', treatment_id=t.id) }}">Voir les disponibilites</a></article>{% endfor %}</div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}">
+<section class="client-hero">
+  <div>
+    <p class="eyebrow">Instituts de massage a Rouen</p>
+    <h1>Rituels d'Ailleurs</h1>
+    <p>Un moment de calme, de soin et de deconnexion. Choisissez votre rituel, consultez les disponibilites en temps reel et reservez votre rendez-vous en quelques clics.</p>
+    <div class="hero-buttons">
+      <a class="btn" href="{{ url_for('booking.choose_treatment') }}">Prendre rendez-vous</a>
+      <a class="btn ghost" href="{{ url_for('public.treatments') }}">Decouvrir les soins</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <span class="hero-badge">Rituels d'Ailleurs + Le Petit Rituel</span>
+    <strong>Massages, soins visage et rituels bien-etre.</strong>
+    <small>Reservation simple, disponibilites reelles, accueil personnalise.</small>
+  </div>
+</section>
+
+<section class="trust-row">
+  <article class="trust-card"><b>2</b><span>instituts pilotes</span></article>
+  <article class="trust-card"><b>30 s</b><span>pour trouver un creneau</span></article>
+  <article class="trust-card"><b>Sur mesure</b><span>soins adaptes au besoin client</span></article>
+</section>
+
+<section class="client-section">
+  <p class="eyebrow">Comment reserver</p>
+  <h2>Un parcours simple et rassurant.</h2>
+  <p>La reservation se fait en quatre etapes : choix de la prestation, choix du jour, choix de l'horaire puis confirmation. Le planning interne attribue automatiquement la praticienne et la cabine adaptees.</p>
+  <div class="steps">
+    <article class="step-card"><span>1</span><h3>Choisissez le soin</h3><p>Massage, soin visage, rituel solo ou duo.</p></article>
+    <article class="step-card"><span>2</span><h3>Voyez les jours libres</h3><p>Le calendrier affiche uniquement les jours reservables.</p></article>
+    <article class="step-card"><span>3</span><h3>Validez l'horaire</h3><p>Selectionnez le creneau qui vous convient.</p></article>
+    <article class="step-card"><span>4</span><h3>Profitez</h3><p>Votre rendez-vous est confirme immediatement.</p></article>
+  </div>
+</section>
+
+<section class="client-section">
+  <p class="eyebrow">Prestations populaires</p>
+  <h2>Decouvrir nos rituels</h2>
+  <div class="treatment-grid">
+    {% for t in treatments[:3] %}
+    <article class="client-card">
+      <span>{{ t.category }}</span>
+      <h3>{{ t.name }}</h3>
+      <p>{{ t.duration_minutes }} min · {{ t.institute.name if t.institute else 'Institut' }}</p>
+      <p class="price">{{ '%.0f'|format(t.price) }} euros</p>
+      <a class="btn small" href="{{ url_for('booking.month_calendar', treatment_id=t.id) }}">Voir les disponibilites</a>
+    </article>
+    {% else %}
+    <article class="client-card"><h3>Prestations a venir</h3><p>Les soins seront affiches ici une fois actifs dans l'administration.</p></article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="client-section">
+  <p class="eyebrow">Demonstration fonctionnelle</p>
+  <h2>Un site pense pour l'accueil client et le pilotage interne.</h2>
+  <p>Le parcours public est relie au planning, aux competences des praticiennes et aux cabines disponibles. Cote administration, l'equipe dispose du planning, des stocks, du suivi RH et du pilotage QSE.</p>
+  <div class="hero-buttons"><a class="btn" href="{{ url_for('booking.choose_treatment') }}">Tester la reservation</a></div>
+</section>
+{% endblock %}
