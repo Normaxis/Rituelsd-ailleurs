@@ -1,5 +1,40 @@
 <!doctype html>
 <html lang="fr">
-<head><meta charset="utf-8"><title>Planning semaine</title></head>
-<body><h1>Planning semaine</h1></body>
+<head>
+  <meta charset="utf-8">
+  <title>Planning semaine - {{ week_label }}</title>
+  <style>
+    @page{size:A4 landscape;margin:10mm}body{font-family:Arial,sans-serif;color:#241b14;margin:0;background:#fff}header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #b88a3d;padding-bottom:10px;margin-bottom:14px}.brand{font-weight:900;font-size:22px}.muted{color:#6f6258;font-size:12px}.actions button{border:0;border-radius:8px;background:#b88a3d;color:#fff;font-weight:900;padding:8px 12px}h1{font-size:24px;margin:4px 0}h2{font-size:16px;margin:18px 0 8px;color:#8b6429;text-transform:uppercase;letter-spacing:.08em}table{width:100%;border-collapse:collapse;page-break-inside:auto}th,td{border:1px solid #ddd1c4;padding:6px;vertical-align:top;font-size:11px}th{background:#fbf3e8;text-align:left;color:#4c3829}.name-col{width:150px;font-weight:900;background:#fffaf4}.slot{display:block;border-radius:8px;background:#e4f4eb;color:#24543a;padding:5px;margin-bottom:4px;font-weight:800}.slot.off,.slot.holiday,.slot.training,.slot.closed,.slot.maintenance{background:#f8e7e1;color:#81483f}.appt{display:block;border-radius:8px;background:#f4e7f8;color:#633b73;padding:5px;margin-bottom:4px}.small{font-size:10px;color:#67584b;font-weight:400}.empty{color:#aaa}.print-note{margin-top:12px;font-size:10px;color:#777}@media print{.actions{display:none}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}h2{page-break-after:avoid}}
+  </style>
+</head>
+<body>
+  <header>
+    <div><div class="brand">Rituels d’Ailleurs</div><h1>Planning semaine</h1><div class="muted">{{ week_label }}</div></div>
+    <div class="actions"><button onclick="window.print()">Imprimer</button></div>
+  </header>
+
+  <h2>Horaires des praticiennes</h2>
+  <table>
+    <tr><th class="name-col">Praticienne</th>{% for d in week_days %}<th>{{ d.label }}<br>{{ d.date.strftime('%d/%m') }}</th>{% endfor %}</tr>
+    {% for u in users %}
+    <tr><td class="name-col">{{ u.full_name }}</td>{% for d in week_days %}{% set idx=loop.index0 %}{% set s=staff_week_slots.get(u.id, {}).get(idx) %}<td>{% if s %}<span class="slot {{ s.status }}">{{ s.start_time.strftime('%H:%M') }} - {{ s.end_time.strftime('%H:%M') }}<br><span class="small">{{ 'Disponible' if s.status=='present' else s.status|capitalize }}{% if s.note %} · {{ s.note }}{% endif %}</span></span>{% else %}<span class="empty">Repos / non planifié</span>{% endif %}</td>{% endfor %}</tr>
+    {% endfor %}
+  </table>
+
+  <h2>Disponibilités cabines</h2>
+  <table>
+    <tr><th class="name-col">Cabine</th>{% for d in week_days %}<th>{{ d.label }}<br>{{ d.date.strftime('%d/%m') }}</th>{% endfor %}</tr>
+    {% for c in cabins %}
+    <tr><td class="name-col">{{ c.name }}</td>{% for d in week_days %}{% set idx=loop.index0 %}{% set s=cabin_week_slots.get(c.id, {}).get(idx) %}<td>{% if s %}<span class="slot {{ s.status }}">{{ s.start_time.strftime('%H:%M') }} - {{ s.end_time.strftime('%H:%M') }}<br><span class="small">{{ 'Disponible' if s.status=='available' else s.status|capitalize }}{% if s.note %} · {{ s.note }}{% endif %}</span></span>{% else %}<span class="empty">Fermée / non planifiée</span>{% endif %}</td>{% endfor %}</tr>
+    {% endfor %}
+  </table>
+
+  <h2>Rendez-vous de la semaine</h2>
+  <table>
+    <tr>{% for d in week_days %}<th>{{ d.label }} {{ d.date.strftime('%d/%m') }}</th>{% endfor %}</tr>
+    <tr>{% for d in week_days %}{% set idx=loop.index0 %}<td>{% for a in appointments_by_day.get(idx, []) %}<span class="appt"><strong>{{ a.start_at.strftime('%H:%M') }} - {{ a.end_at.strftime('%H:%M') }}</strong><br>{{ a.customer_name }}<br><span class="small">{{ a.treatment.name }} · {{ a.user.full_name }} · {{ a.cabin.name }}</span></span>{% else %}<span class="empty">Aucun rendez-vous</span>{% endfor %}</td>{% endfor %}</tr>
+  </table>
+
+  <div class="print-note">Document généré depuis le planning hebdomadaire.</div>
+</body>
 </html>
