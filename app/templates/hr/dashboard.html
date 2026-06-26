@@ -1,1 +1,39 @@
-{% extends 'admin/base_admin.html' %}{% block admin_content %}<p class="eyebrow">Pilotage RH</p><h1>Personnel, formations et habilitations</h1><p class="muted">Suivi des ressources humaines, des presences planning, des formations et des habilitations a renouveler.</p><div class="grid cards"><article class="card"><span>Personnel actif</span><h2>{{ users|length }}</h2><p>Salaries rattaches aux instituts et comptes internes.</p><a class="btn small" href="{{ url_for('hr.personnel') }}">Personnel</a></article><article class="card"><span>Formations a suivre</span><h2>{{ trainings_due|length }}</h2><p>Formations expirees ou a renouveler dans les 60 jours.</p><a class="btn small" href="{{ url_for('hr.trainings') }}">Gerer</a></article><article class="card"><span>Habilitations a suivre</span><h2>{{ habilitations_due|length }}</h2><p>SST, evacuation, incendie, electrique et renouvellements.</p><a class="btn small" href="{{ url_for('hr.habilitations') }}">Gerer</a></article></div><section class="grid cards"><article class="card"><span>Planning 7 jours</span><h3>{{ week_slots|length }} evenements planning</h3><p>Presences, repos, conges et formations doivent etre connectes au planning date.</p><a class="btn small" href="{{ url_for('planning.index') }}">Ouvrir planning</a></article><article class="card"><span>Regle metier</span><h3>Formation = ressource indisponible</h3><p>Une formation planifiee doit bloquer la reservation client sur le creneau concerne.</p></article><article class="card"><span>Alertes</span><h3>Renouvellement a 60 jours</h3><p>Les habilitations et formations avec date de fin proche remontent ici.</p></article></section><div class="table-wrap"><table><tr><th>Nom</th><th>Institut</th><th>Role</th><th>Statut</th></tr>{% for u in users %}<tr><td>{{u.full_name}}</td><td>{{u.institute.name if u.institute else '-'}}</td><td>{{u.role.label if u.role else '-'}}</td><td>{{'Actif' if u.is_active else 'Inactif'}}</td></tr>{% endfor %}</table></div>{% endblock %}
+{% extends 'admin/base_admin.html' %}
+{% block admin_content %}
+<style>
+.hr-demo{display:grid;gap:18px}.hr-hero{background:linear-gradient(135deg,#fff8ef,#fff);border:1px solid #eadfd2;border-radius:20px;padding:22px;box-shadow:0 14px 36px rgba(45,32,20,.06)}.hr-hero h1{margin:0;font-size:34px;letter-spacing:-.05em}.hr-hero p{margin:8px 0 0;color:#7a6a5c;line-height:1.45}.hr-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.hr-kpi{background:#fff;border:1px solid #eadfd2;border-radius:16px;padding:16px}.hr-kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.hr-kpi strong{display:block;font-size:30px;margin-top:5px}.hr-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.hr-card{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:18px}.hr-card h3{margin:0 0 8px}.hr-card p{margin:0 0 12px;color:#7a6a5c;line-height:1.4}.hr-card a{font-weight:900;text-decoration:none;color:#8a5d21}.hr-table{background:#fff;border:1px solid #eadfd2;border-radius:18px;overflow:hidden}.hr-table h2{margin:0;padding:16px;border-bottom:1px solid #eadfd2}.hr-table table{width:100%;border-collapse:collapse}.hr-table th,.hr-table td{padding:10px;border-bottom:1px solid #f0e7dc;text-align:left;font-size:13px}.hr-table th{background:#fff8ef;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#5d4a38}.badge-active,.badge-off{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900}.badge-active{background:#e4f4eb;color:#23573a}.badge-off{background:#f0f0f1;color:#555b64}@media(max-width:1000px){.hr-kpis,.hr-grid{grid-template-columns:1fr 1fr}}@media(max-width:620px){.hr-kpis,.hr-grid{grid-template-columns:1fr}}
+</style>
+<section class="hr-demo">
+  <div class="hr-hero">
+    <p class="eyebrow">Pilotage RH</p>
+    <h1>Personnel, formations et habilitations</h1>
+    <p>Suivi des salaries, des formations, des habilitations et des evenements planning. Cette page montre la logique conformite RH / QSE utile pour un institut.</p>
+  </div>
+
+  <div class="hr-kpis">
+    <article class="hr-kpi"><span>Personnel</span><strong>{{ users|length }}</strong></article>
+    <article class="hr-kpi"><span>Formations a suivre</span><strong>{{ trainings_due|length }}</strong></article>
+    <article class="hr-kpi"><span>Habilitations a suivre</span><strong>{{ habilitations_due|length }}</strong></article>
+    <article class="hr-kpi"><span>Planning 7 jours</span><strong>{{ week_slots|length }}</strong></article>
+  </div>
+
+  <div class="hr-grid">
+    <article class="hr-card"><h3>Personnel</h3><p>Comptes internes, roles, instituts et photos des praticiennes.</p><a href="{{ url_for('hr.personnel') }}">Ouvrir personnel</a></article>
+    <article class="hr-card"><h3>Formations</h3><p>Accueil, securite, evacuation, gestes metier et dates de renouvellement.</p><a href="{{ url_for('hr.trainings') }}">Gerer formations</a></article>
+    <article class="hr-card"><h3>Habilitations</h3><p>SST, incendie, evacuation, electrique et autorisations internes.</p><a href="{{ url_for('hr.habilitations') }}">Gerer habilitations</a></article>
+    <article class="hr-card"><h3>Regle planning</h3><p>Une formation planifiee peut rendre la ressource indisponible dans le planning.</p><a href="{{ url_for('planning.index') }}">Ouvrir planning</a></article>
+    <article class="hr-card"><h3>Alertes 60 jours</h3><p>Les renouvellements proches remontent dans les alertes du tableau de bord.</p></article>
+    <article class="hr-card"><h3>Version demo</h3><p>Fonctionnel sans ajout de base : affichage, suivi, alertes et navigation.</p></article>
+  </div>
+
+  <section class="hr-table">
+    <h2>Personnel</h2>
+    <table>
+      <tr><th>Nom</th><th>Institut</th><th>Role</th><th>Statut</th></tr>
+      {% for u in users %}
+      <tr><td>{{ u.full_name }}</td><td>{{ u.institute.name if u.institute else '-' }}</td><td>{{ u.role.label if u.role else '-' }}</td><td>{% if u.is_active %}<span class="badge-active">Actif</span>{% else %}<span class="badge-off">Inactif</span>{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+</section>
+{% endblock %}
