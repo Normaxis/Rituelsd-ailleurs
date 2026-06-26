@@ -13,8 +13,9 @@ SCHEDULER_END_HOUR = 20
 AVAILABLE_STATUS = 'present'
 CABIN_AVAILABLE_STATUS = 'available'
 WEEKDAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
-BLOCKING_STATUS_LABELS = {'off': 'Repos', 'holiday': 'Conge', 'training': 'Formation', 'absence': 'Absence'}
-CABIN_STATUS_LABELS = {'available': 'Cabine disponible', 'closed': 'Cabine fermee', 'maintenance': 'Maintenance'}
+MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+BLOCKING_STATUS_LABELS = {'off': 'Repos', 'holiday': 'Congé', 'training': 'Formation', 'absence': 'Absence'}
+CABIN_STATUS_LABELS = {'available': 'Cabine disponible', 'closed': 'Cabine fermée', 'maintenance': 'Maintenance'}
 
 
 def _day_bounds(d):
@@ -24,6 +25,14 @@ def _day_bounds(d):
 
 def _week_start(d):
     return d - timedelta(days=d.weekday())
+
+
+def _date_label_fr(d):
+    return f"{WEEKDAYS[d.weekday()]} {d.day:02d} {MONTHS[d.month - 1]} {d.year}"
+
+
+def _month_label_fr(d):
+    return f"{MONTHS[d.month - 1].capitalize()} {d.year}"
 
 
 def _overlaps(start_a, end_a, start_b, end_b):
@@ -63,12 +72,12 @@ def _cabin_is_available(cabin_id, start_at, end_at):
     for slot in slots:
         slot_start, slot_end = _slot_bounds(slot)
         if slot.status != CABIN_AVAILABLE_STATUS and _overlaps(start_at, end_at, slot_start, slot_end):
-            return False, f"Cabine indisponible sur ce creneau ({CABIN_STATUS_LABELS.get(slot.status, slot.status)})."
+            return False, f"Cabine indisponible sur ce créneau ({CABIN_STATUS_LABELS.get(slot.status, slot.status)})."
         if slot.status == CABIN_AVAILABLE_STATUS and _overlaps(start_at, end_at, slot_start, slot_end):
             available_intervals.append((slot_start, slot_end))
     if available_intervals and _intervals_cover(start_at, end_at, available_intervals):
         return True, ''
-    return False, 'La duree du rendez-vous depasse la disponibilite de la cabine.'
+    return False, 'La durée du rendez-vous dépasse la disponibilité de la cabine.'
 
 
 def _free_cabin(institute_id, start_at, end_at, exclude_id=None):
@@ -141,16 +150,16 @@ def _user_slots_for_day(user_id, work_date):
 
 def _user_is_available(user_id, start_at, end_at):
     if end_at <= start_at:
-        return False, 'Le rendez-vous doit avoir une duree positive.'
+        return False, 'Le rendez-vous doit avoir une durée positive.'
     if start_at.date() != end_at.date():
-        return False, 'Le rendez-vous doit rester sur la meme journee.'
+        return False, 'Le rendez-vous doit rester sur la même journée.'
     slots = _user_slots_for_day(user_id, start_at.date())
     if not slots:
-        return False, 'La praticienne n est pas indiquee presente sur cette journee.'
+        return False, 'La praticienne n’est pas indiquée présente sur cette journée.'
     for slot in slots:
         slot_start, slot_end = _slot_bounds(slot)
         if slot.status != AVAILABLE_STATUS and _overlaps(start_at, end_at, slot_start, slot_end):
-            return False, f"Praticienne indisponible sur ce creneau ({BLOCKING_STATUS_LABELS.get(slot.status, slot.status)})."
+            return False, f"Praticienne indisponible sur ce créneau ({BLOCKING_STATUS_LABELS.get(slot.status, slot.status)})."
     present_intervals = []
     for slot in slots:
         if slot.status == AVAILABLE_STATUS:
@@ -158,10 +167,10 @@ def _user_is_available(user_id, start_at, end_at):
             if _overlaps(start_at, end_at, slot_start, slot_end):
                 present_intervals.append((slot_start, slot_end))
     if not present_intervals:
-        return False, 'Le rendez-vous doit etre positionne sur un creneau vert disponible.'
+        return False, 'Le rendez-vous doit être positionné sur un créneau vert disponible.'
     if _intervals_cover(start_at, end_at, present_intervals):
         return True, ''
-    return False, 'La duree du rendez-vous depasse le creneau vert disponible.'
+    return False, 'La durée du rendez-vous dépasse le créneau vert disponible.'
 
 
 def _slot_states_for_user(user_id, selected_date):
@@ -181,12 +190,19 @@ def _parse_week_start(value):
         return _week_start(date.today())
 
 
+def _parse_week_count():
+    try:
+        return max(1, min(12, int(request.form.get('week_count', 1))))
+    except (TypeError, ValueError):
+        return 1
+
+
 def _create_work_slot_from_base(base, target_date):
     return WorkSlot(user_id=base.user_id, work_date=target_date, start_time=base.start_time, end_time=base.end_time, status=base.status, note=base.note or 'Horaire de base')
 
 
 def _create_cabin_slot_from_base(base, target_date):
-    return CabinAvailabilitySlot(cabin_id=base.cabin_id, work_date=target_date, start_time=base.start_time, end_time=base.end_time, status=base.status, note=base.note or 'Disponibilite de base')
+    return CabinAvailabilitySlot(cabin_id=base.cabin_id, work_date=target_date, start_time=base.start_time, end_time=base.end_time, status=base.status, note=base.note or 'Disponibilité de base')
 
 
 def _base_user_schedule_map():
@@ -221,6 +237,10 @@ def _week_cabin_slot_map(week_start):
     return mapped
 
 
+def _week_days(week_start):
+    return [{'date': week_start + timedelta(days=i), 'label': WEEKDAYS[i]} for i in range(7)]
+
+
 @planning_bp.route('/', methods=['GET','POST'])
 @login_required
 def index():
@@ -236,7 +256,7 @@ def index():
     if selected_view not in ('user', 'cabin'):
         selected_view = 'user'
     selected_week_start = _week_start(selected_date)
-    week_days = [{'date': selected_week_start + timedelta(days=i), 'label': WEEKDAYS[i]} for i in range(7)]
+    week_days = _week_days(selected_week_start)
 
     start_day, end_day = _day_bounds(selected_date)
     users = User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()
@@ -291,7 +311,7 @@ def index():
             blocks.sort(key=lambda item: item['top'])
             board_resources.append({'id': cabin.id, 'type': 'cabin', 'name': cabin.name, 'subtitle': cabin.cabin_type, 'blocks': blocks, 'slot_states': {slot['time']: True for slot in _time_slots()}})
 
-    return render_template('planning/pro.html', users=users, cabins=cabins, treatments=treatments, slots=slots, appointments=appointments, selected_date=selected_date, prev_day=selected_date - timedelta(days=1), next_day=selected_date + timedelta(days=1), week_start=selected_week_start, week_days=week_days, weekdays=WEEKDAYS, month_weeks=_month_matrix(selected_date), selected_view=selected_view, board_resources=board_resources, time_slots=_time_slots(), time_markers=_time_markers(), scheduler_start_hour=SCHEDULER_START_HOUR, scheduler_end_hour=SCHEDULER_END_HOUR, user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), staff_base_slots=_base_user_schedule_map(), cabin_base_slots=_base_cabin_schedule_map(), staff_week_slots=_week_work_slot_map(selected_week_start), cabin_week_slots=_week_cabin_slot_map(selected_week_start))
+    return render_template('planning/pro.html', users=users, cabins=cabins, treatments=treatments, slots=slots, appointments=appointments, selected_date=selected_date, selected_date_label=_date_label_fr(selected_date), selected_month_label=_month_label_fr(selected_date), prev_day=selected_date - timedelta(days=1), next_day=selected_date + timedelta(days=1), week_start=selected_week_start, prev_week=selected_week_start - timedelta(days=7), next_week=selected_week_start + timedelta(days=7), week_days=week_days, weekdays=WEEKDAYS, months=MONTHS, month_weeks=_month_matrix(selected_date), selected_view=selected_view, board_resources=board_resources, time_slots=_time_slots(), time_markers=_time_markers(), scheduler_start_hour=SCHEDULER_START_HOUR, scheduler_end_hour=SCHEDULER_END_HOUR, user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), staff_base_slots=_base_user_schedule_map(), cabin_base_slots=_base_cabin_schedule_map(), staff_week_slots=_week_work_slot_map(selected_week_start), cabin_week_slots=_week_cabin_slot_map(selected_week_start))
 
 
 @planning_bp.route('/weekly-plan', methods=['POST'])
@@ -299,51 +319,56 @@ def index():
 def weekly_plan():
     week_start = _parse_week_start(request.form.get('week_start'))
     action = request.form.get('action', 'save_week_table')
-    week_end = week_start + timedelta(days=7)
+    week_count = _parse_week_count()
+    period_end = week_start + timedelta(days=7 * week_count)
 
     if action == 'save_week_table':
         user_ids = [int(value) for value in request.form.getlist('staff_user_id')]
         cabin_ids = [int(value) for value in request.form.getlist('cabin_id')]
         if user_ids:
-            WorkSlot.query.filter(WorkSlot.user_id.in_(user_ids), WorkSlot.work_date >= week_start, WorkSlot.work_date < week_end).delete(synchronize_session=False)
+            WorkSlot.query.filter(WorkSlot.user_id.in_(user_ids), WorkSlot.work_date >= week_start, WorkSlot.work_date < period_end).delete(synchronize_session=False)
         if cabin_ids:
-            CabinAvailabilitySlot.query.filter(CabinAvailabilitySlot.cabin_id.in_(cabin_ids), CabinAvailabilitySlot.work_date >= week_start, CabinAvailabilitySlot.work_date < week_end).delete(synchronize_session=False)
+            CabinAvailabilitySlot.query.filter(CabinAvailabilitySlot.cabin_id.in_(cabin_ids), CabinAvailabilitySlot.work_date >= week_start, CabinAvailabilitySlot.work_date < period_end).delete(synchronize_session=False)
         try:
-            for user_id in user_ids:
-                for weekday in range(7):
-                    if not request.form.get(f'staff_active_{user_id}_{weekday}'):
-                        continue
-                    start_time = datetime.strptime(request.form[f'staff_start_{user_id}_{weekday}'], '%H:%M').time()
-                    end_time = datetime.strptime(request.form[f'staff_end_{user_id}_{weekday}'], '%H:%M').time()
-                    if end_time <= start_time:
-                        raise ValueError('Horaire praticienne invalide')
-                    db.session.add(WorkSlot(user_id=user_id, work_date=week_start + timedelta(days=weekday), start_time=start_time, end_time=end_time, status=request.form.get(f'staff_status_{user_id}_{weekday}', AVAILABLE_STATUS), note=request.form.get(f'staff_note_{user_id}_{weekday}', '')))
-            for cabin_id in cabin_ids:
-                for weekday in range(7):
-                    if not request.form.get(f'cabin_active_{cabin_id}_{weekday}'):
-                        continue
-                    start_time = datetime.strptime(request.form[f'cabin_start_{cabin_id}_{weekday}'], '%H:%M').time()
-                    end_time = datetime.strptime(request.form[f'cabin_end_{cabin_id}_{weekday}'], '%H:%M').time()
-                    if end_time <= start_time:
-                        raise ValueError('Horaire cabine invalide')
-                    db.session.add(CabinAvailabilitySlot(cabin_id=cabin_id, work_date=week_start + timedelta(days=weekday), start_time=start_time, end_time=end_time, status=request.form.get(f'cabin_status_{cabin_id}_{weekday}', CABIN_AVAILABLE_STATUS), note=request.form.get(f'cabin_note_{cabin_id}_{weekday}', '')))
+            for week_offset in range(week_count):
+                target_week = week_start + timedelta(days=7 * week_offset)
+                for user_id in user_ids:
+                    for weekday in range(7):
+                        if not request.form.get(f'staff_active_{user_id}_{weekday}'):
+                            continue
+                        start_time = datetime.strptime(request.form[f'staff_start_{user_id}_{weekday}'], '%H:%M').time()
+                        end_time = datetime.strptime(request.form[f'staff_end_{user_id}_{weekday}'], '%H:%M').time()
+                        if end_time <= start_time:
+                            raise ValueError('Horaire praticienne invalide')
+                        db.session.add(WorkSlot(user_id=user_id, work_date=target_week + timedelta(days=weekday), start_time=start_time, end_time=end_time, status=request.form.get(f'staff_status_{user_id}_{weekday}', AVAILABLE_STATUS), note=request.form.get(f'staff_note_{user_id}_{weekday}', '')))
+                for cabin_id in cabin_ids:
+                    for weekday in range(7):
+                        if not request.form.get(f'cabin_active_{cabin_id}_{weekday}'):
+                            continue
+                        start_time = datetime.strptime(request.form[f'cabin_start_{cabin_id}_{weekday}'], '%H:%M').time()
+                        end_time = datetime.strptime(request.form[f'cabin_end_{cabin_id}_{weekday}'], '%H:%M').time()
+                        if end_time <= start_time:
+                            raise ValueError('Horaire cabine invalide')
+                        db.session.add(CabinAvailabilitySlot(cabin_id=cabin_id, work_date=target_week + timedelta(days=weekday), start_time=start_time, end_time=end_time, status=request.form.get(f'cabin_status_{cabin_id}_{weekday}', CABIN_AVAILABLE_STATUS), note=request.form.get(f'cabin_note_{cabin_id}_{weekday}', '')))
         except (KeyError, ValueError):
             db.session.rollback()
             flash('Un horaire de la semaine est invalide.', 'error')
             return redirect(url_for('planning.index', date=week_start.isoformat(), view=request.form.get('view', 'user')))
         db.session.commit()
-        flash('Planification de la semaine enregistree.', 'success')
+        flash(f'Planification enregistrée sur {week_count} semaine(s).', 'success')
         return redirect(url_for('planning.index', date=week_start.isoformat(), view=request.form.get('view', 'user')))
 
     if action == 'generate_base':
-        WorkSlot.query.filter(WorkSlot.work_date >= week_start, WorkSlot.work_date < week_end).delete(synchronize_session=False)
-        CabinAvailabilitySlot.query.filter(CabinAvailabilitySlot.work_date >= week_start, CabinAvailabilitySlot.work_date < week_end).delete(synchronize_session=False)
-        for base in WeeklyUserSchedule.query.all():
-            db.session.add(_create_work_slot_from_base(base, week_start + timedelta(days=base.weekday)))
-        for base in WeeklyCabinSchedule.query.all():
-            db.session.add(_create_cabin_slot_from_base(base, week_start + timedelta(days=base.weekday)))
+        WorkSlot.query.filter(WorkSlot.work_date >= week_start, WorkSlot.work_date < period_end).delete(synchronize_session=False)
+        CabinAvailabilitySlot.query.filter(CabinAvailabilitySlot.work_date >= week_start, CabinAvailabilitySlot.work_date < period_end).delete(synchronize_session=False)
+        for week_offset in range(week_count):
+            target_week = week_start + timedelta(days=7 * week_offset)
+            for base in WeeklyUserSchedule.query.all():
+                db.session.add(_create_work_slot_from_base(base, target_week + timedelta(days=base.weekday)))
+            for base in WeeklyCabinSchedule.query.all():
+                db.session.add(_create_cabin_slot_from_base(base, target_week + timedelta(days=base.weekday)))
         db.session.commit()
-        flash('Semaine generee depuis les horaires de base.', 'success')
+        flash(f'Semaine générée depuis les horaires de base sur {week_count} semaine(s).', 'success')
         return redirect(url_for('planning.index', date=week_start.isoformat(), view=request.form.get('view', 'user')))
 
     work_date = datetime.strptime(request.form['work_date'], '%Y-%m-%d').date()
@@ -357,8 +382,22 @@ def weekly_plan():
     else:
         db.session.add(WorkSlot(user_id=int(request.form['user_id']), work_date=work_date, start_time=start_time, end_time=end_time, status=request.form.get('user_status', AVAILABLE_STATUS), note=request.form.get('note', '')))
     db.session.commit()
-    flash('Creneau ajoute a la semaine.', 'success')
+    flash('Créneau ajouté à la semaine.', 'success')
     return redirect(url_for('planning.index', date=work_date.isoformat(), view=request.form.get('view', 'user')))
+
+
+@planning_bp.route('/week-print')
+@login_required
+def week_print():
+    week_start = _parse_week_start(request.args.get('date'))
+    week_end = week_start + timedelta(days=7)
+    users = User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()
+    cabins = Cabin.query.filter_by(is_active=True).order_by(Cabin.name).all()
+    appointments = Appointment.query.filter(Appointment.start_at >= week_start, Appointment.start_at < week_end).order_by(Appointment.start_at).all()
+    appointments_by_day = {i: [] for i in range(7)}
+    for appointment in appointments:
+        appointments_by_day[appointment.start_at.date().weekday()].append(appointment)
+    return render_template('planning/week_print.html', week_start=week_start, week_days=_week_days(week_start), week_label=f"{_date_label_fr(week_start)} - {_date_label_fr(week_end - timedelta(days=1))}", users=users, cabins=cabins, staff_week_slots=_week_work_slot_map(week_start), cabin_week_slots=_week_cabin_slot_map(week_start), appointments_by_day=appointments_by_day, weekdays=WEEKDAYS)
 
 
 @planning_bp.route('/appointment/create', methods=['POST'])
@@ -373,7 +412,7 @@ def create_appointment():
     end_at = start_at + timedelta(minutes=treatment.duration_minutes or 60)
 
     if user.institute_id and cabin.institute_id and user.institute_id != cabin.institute_id:
-        flash('La cabine selectionnee ne correspond pas a l etablissement de la praticienne.')
+        flash('La cabine sélectionnée ne correspond pas à l’établissement de la praticienne.')
         return redirect(url_for('planning.index', date=selected_date.isoformat(), view=request.form.get('view', 'user')))
     available, message = _user_is_available(user.id, start_at, end_at)
     if not available:
@@ -384,16 +423,16 @@ def create_appointment():
         flash(cabin_message)
         return redirect(url_for('planning.index', date=selected_date.isoformat(), view=request.form.get('view', 'user')))
     if _busy_appointment(Appointment.query.filter_by(user_id=user.id), start_at, end_at):
-        flash('Conflit : cette praticienne a deja un rendez-vous sur ce creneau.')
+        flash('Conflit : cette praticienne a déjà un rendez-vous sur ce créneau.')
         return redirect(url_for('planning.index', date=selected_date.isoformat(), view=request.form.get('view', 'user')))
     if _busy_appointment(Appointment.query.filter_by(cabin_id=cabin.id), start_at, end_at):
-        flash('Conflit : cette cabine est deja occupee sur ce creneau.')
+        flash('Conflit : cette cabine est déjà occupée sur ce créneau.')
         return redirect(url_for('planning.index', date=selected_date.isoformat(), view=request.form.get('view', 'user')))
 
     appointment = Appointment(customer_name=request.form['customer_name'], customer_email=request.form.get('customer_email', ''), treatment_id=treatment.id, user_id=user.id, cabin_id=cabin.id, start_at=start_at, end_at=end_at, status='confirmed')
     db.session.add(appointment)
     db.session.commit()
-    flash('Rendez-vous cree depuis le planning.')
+    flash('Rendez-vous créé depuis le planning.')
     return redirect(url_for('planning.index', date=selected_date.isoformat(), view=request.form.get('view', 'user')))
 
 
@@ -410,7 +449,7 @@ def move_event():
         target_time_value = data.get('time') or f"{int(data.get('hour')):02d}:00"
         target_time = datetime.strptime(target_time_value, '%H:%M').time()
     except (TypeError, ValueError):
-        return jsonify({'ok': False, 'message': 'Donnees de deplacement invalides'}), 400
+        return jsonify({'ok': False, 'message': 'Données de déplacement invalides'}), 400
     target_start = datetime.combine(target_date, target_time)
 
     if event_type == 'appointment':
@@ -423,7 +462,7 @@ def move_event():
             if not available:
                 return jsonify({'ok': False, 'message': message}), 409
             if _busy_appointment(Appointment.query.filter_by(user_id=user.id), target_start, target_end, appointment.id):
-                return jsonify({'ok': False, 'message': 'Praticienne deja occupee'}), 409
+                return jsonify({'ok': False, 'message': 'Praticienne déjà occupée'}), 409
             if appointment.cabin and not _busy_appointment(Appointment.query.filter_by(cabin_id=appointment.cabin_id), target_start, target_end, appointment.id):
                 cabin_available, _ = _cabin_is_available(appointment.cabin_id, target_start, target_end)
                 cabin = appointment.cabin if cabin_available else None
@@ -442,9 +481,9 @@ def move_event():
             if not cabin_available:
                 return jsonify({'ok': False, 'message': cabin_message}), 409
             if _busy_appointment(Appointment.query.filter_by(cabin_id=cabin.id), target_start, target_end, appointment.id):
-                return jsonify({'ok': False, 'message': 'Cabine deja occupee'}), 409
+                return jsonify({'ok': False, 'message': 'Cabine déjà occupée'}), 409
             if _busy_appointment(Appointment.query.filter_by(user_id=appointment.user_id), target_start, target_end, appointment.id):
-                return jsonify({'ok': False, 'message': 'Praticienne deja occupee'}), 409
+                return jsonify({'ok': False, 'message': 'Praticienne déjà occupée'}), 409
             appointment.cabin_id = cabin.id
         else:
             return jsonify({'ok': False, 'message': 'Ressource invalide'}), 400
@@ -458,7 +497,7 @@ def move_event():
         duration = datetime.combine(slot.work_date, slot.end_time) - datetime.combine(slot.work_date, slot.start_time)
         new_end = target_start + duration
         if new_end.date() != target_date:
-            return jsonify({'ok': False, 'message': 'Le creneau doit rester sur la meme journee'}), 409
+            return jsonify({'ok': False, 'message': 'Le créneau doit rester sur la même journée'}), 409
         slot.user_id = resource_id
         slot.work_date = target_date
         slot.start_time = target_start.time()
