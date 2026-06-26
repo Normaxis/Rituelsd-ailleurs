@@ -111,6 +111,7 @@ function slotIsInAvailability(cell){
 document.addEventListener('DOMContentLoaded',function(){
   const board=document.querySelector('.planning-premium');
   if(!board)return;
+  const csrfToken=board.dataset.csrfToken||'';
   applyFrenchDateLabels();
   refreshAvailability();
   window.addEventListener('load',function(){applyFrenchDateLabels();refreshAvailability();});
@@ -153,6 +154,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('dragend',function(e){
     const item=e.target.closest('[data-event-id]');
     if(item)item.classList.remove('dragging');
+    dragged=null;
   });
 
   document.querySelectorAll('.slot-drop').forEach(function(cell){
@@ -185,7 +187,11 @@ document.addEventListener('DOMContentLoaded',function(){
         return;
       }
       const payload={event_type:dragged.event_type,event_id:dragged.event_id,resource_type:cell.dataset.resourceType,resource_id:cell.dataset.resourceId,time:cell.dataset.time,date:board.dataset.date};
-      fetch('/admin/planning/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      fetch('/admin/planning/api/move',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-Token':csrfToken},
+        body:JSON.stringify(payload)
+      })
         .then(function(r){return r.json().then(function(j){return {ok:r.ok,body:j};});})
         .then(function(res){if(res.ok&&res.body.ok){window.location.reload();}else{alert(res.body.message||'Déplacement impossible');}})
         .catch(function(){alert('Erreur réseau');});
