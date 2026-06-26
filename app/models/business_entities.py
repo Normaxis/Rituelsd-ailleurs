@@ -38,6 +38,21 @@ class GiftCard(db.Model):
         return bool(self.expires_on and self.expires_on < date.today())
 
 
+class WaitlistEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    treatment_id = db.Column(db.Integer, db.ForeignKey('treatment.id'), nullable=False)
+    customer_name = db.Column(db.String(160), nullable=False)
+    customer_email = db.Column(db.String(160), default='')
+    customer_phone = db.Column(db.String(50), default='')
+    preferred_date = db.Column(db.Date)
+    preferred_period = db.Column(db.String(80), default='')
+    practitioner_name = db.Column(db.String(160), default='')
+    note = db.Column(db.Text, default='')
+    status = db.Column(db.String(40), default='open')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    treatment = db.relationship('Treatment')
+
+
 class Supplier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(160), nullable=False)
