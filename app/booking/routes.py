@@ -3,7 +3,7 @@ from datetime import datetime, date, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from app.extensions import db
-from app.models import Appointment, Cabin, SkillILU, Treatment, WorkSlot
+from app.models import Appointment, Cabin, Customer, SkillILU, Treatment, WorkSlot
 
 booking_bp = Blueprint('booking', __name__)
 
@@ -62,6 +62,22 @@ def _free_cabin(institute_id, treatment, start_at, end_at):
         if not busy:
             return cabin
     return None
+
+
+def _sync_customer(name, email):
+    email = (email or '').strip()
+    name = (name or '').strip()
+    if not email or not name:
+        return None
+    existing = Customer.query.filter_by(email=email).first()
+    if existing:
+        return existing
+    parts = name.split(' ', 1)
+    first_name = parts[0]
+    last_name = parts[1] if len(parts) > 1 else ''
+    customer = Customer(first_name=first_name, last_name=last_name or '-', email=email)
+    db.session.add(customer)
+    return customer
 
 
 def slots_for_treatment(treatment, target_date):
@@ -136,9 +152,12 @@ def day_slots(treatment_id, day):
             flash('Ce creneau n est plus disponible.', 'danger')
             return redirect(request.url)
 
+        customer_name = request.form['customer_name']
+        customer_email = request.form.get('customer_email', '')
+        _sync_customer(customer_name, customer_email)
         appointment = Appointment(
-            customer_name=request.form['customer_name'],
-            customer_email=request.form.get('customer_email', ''),
+            customer_name=customer_name,
+            customer_email=customer_email,
             treatment=treatment,
             user=chosen['user'],
             cabin=chosen['cabin'],
