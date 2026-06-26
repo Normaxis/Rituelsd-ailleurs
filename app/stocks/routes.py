@@ -23,13 +23,13 @@ def _stock_status(product):
     quantity = product.quantity or 0
     threshold = product.alert_threshold or 0
     if threshold <= 0:
-        return 'surveille', 'Seuil non defini'
+        return 'watch', 'Seuil non defini'
     if quantity <= 0:
-        return 'rupture', 'Rupture'
+        return 'out', 'Rupture'
     if quantity <= threshold:
-        return 'alerte', 'A recommander'
+        return 'alert', 'A recommander'
     if quantity <= threshold * 1.5:
-        return 'surveille', 'A surveiller'
+        return 'watch', 'A surveiller'
     return 'ok', 'OK'
 
 
@@ -86,7 +86,7 @@ def index():
     recent_entries = sum(m.quantity or 0 for m in recent_movements if (m.quantity or 0) > 0)
     recent_outputs = abs(sum(m.quantity or 0 for m in recent_movements if (m.quantity or 0) < 0))
     recent_losses = abs(sum(m.quantity or 0 for m in recent_movements if m.movement_type == 'loss'))
-    reorder_priority = [row for row in stock_rows if row['status_class'] in ['rupture', 'alerte', 'surveille']]
+    reorder_priority = [row for row in stock_rows if row['status_class'] in ['out', 'alert', 'watch']]
 
     return render_template(
         'stocks/index.html',
