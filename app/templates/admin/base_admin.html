@@ -5,7 +5,7 @@
   <title>Administration - Rituels d'Ailleurs</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
-<body class="admin-body">
+<body class="admin-body {% if request.endpoint and request.endpoint.startswith('planning.') %}planning-shell-body{% endif %}">
 <aside class="sidebar">
   <div class="brand admin-brand">Rituels <span>d'Ailleurs</span></div>
   <small class="sidebar-kicker">Pilotage des instituts</small>
@@ -52,6 +52,6 @@
     <a href="{{ url_for('auth.logout') }}">Deconnexion</a>
   </details>
 </aside>
-<section class="admin-main">{% block admin_content %}{% endblock %}</section>
+<section class="admin-main {% if request.endpoint and request.endpoint.startswith('planning.') %}planning-main{% endif %}">{% block admin_content %}{% endblock %}</section>
 </body>
 </html>
