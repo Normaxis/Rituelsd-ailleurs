@@ -1,0 +1,26 @@
+from datetime import datetime
+from flask import Blueprint, render_template, request
+from app.extensions import db
+from app.models import Treatment, WaitlistEntry
+from app.utils.auth import login_required
+
+waitlist_bp = Blueprint('waitlist', __name__)
+
+def parse_date(value):
+    if not value:
+        return None
+    return datetime.strptime(value, '%Y-%m-%d').date()
+
+@waitlist_bp.route('/reservation/attente', methods=['POST'])
+def create():
+    treatment = Treatment.query.get_or_404(int(request.form['treatment_id']))
+    entry = WaitlistEntry(treatment=treatment, customer_name=request.form['customer_name'], customer_email=request.form.get('customer_email',''), customer_phone=request.form.get('customer_phone',''), preferred_date=parse_date(request.form.get('preferred_date')), preferred_period=request.form.get('preferred_period',''), practitioner_name=request.form.get('practitioner_name',''), note=request.form.get('note',''))
+    db.session.add(entry)
+    db.session.commit()
+    return render_template('booking/waitlist_confirmed.html', entry=entry)
+
+@waitlist_bp.route('/admin/attente')
+@login_required
+def admin_index():
+    entries = WaitlistEntry.query.order_by(WaitlistEntry.created_at.desc()).all()
+    return render_template('waitlist/index.html', entries=entries)
