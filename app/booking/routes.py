@@ -3,7 +3,7 @@ from datetime import datetime, date, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from app.extensions import db
-from app.models import Appointment, Cabin, Customer, SkillILU, Treatment, WorkSlot
+from app.models import Appointment, Cabin, Customer, Institute, SkillILU, Treatment, User, WorkSlot
 
 booking_bp = Blueprint('booking', __name__)
 
@@ -34,11 +34,7 @@ def _cabin_matches_treatment(cabin, treatment):
 
 
 def _has_overlap(query, start_at, end_at):
-    return query.filter(
-        Appointment.status == 'confirmed',
-        Appointment.start_at < end_at,
-        Appointment.end_at > start_at,
-    ).first() is not None
+    return query.filter(Appointment.status == 'confirmed', Appointment.start_at < end_at, Appointment.end_at > start_at).first() is not None
 
 
 def _workslot_overlaps(slot, start_at, end_at):
@@ -80,22 +76,29 @@ def _sync_customer(name, email):
     return customer
 
 
-def slots_for_treatment(treatment, target_date):
+def _eligible_practitioners(treatment):
+    rows = SkillILU.query.filter(SkillILU.treatment_id == treatment.id, SkillILU.level.in_(['L', 'U'])).all()
+    users = []
+    seen = set()
+    for row in rows:
+        if row.user and row.user.is_active and row.user_id not in seen:
+            users.append(row.user)
+            seen.add(row.user_id)
+    return users
+
+
+def slots_for_treatment(treatment, target_date, practitioner_id=None):
     if target_date < date.today():
         return []
 
     slots_by_time = {}
-    eligible = SkillILU.query.filter(
-        SkillILU.treatment_id == treatment.id,
-        SkillILU.level.in_(['L', 'U']),
-    ).all()
+    eligible_query = SkillILU.query.filter(SkillILU.treatment_id == treatment.id, SkillILU.level.in_(['L', 'U']))
+    if practitioner_id:
+        eligible_query = eligible_query.filter(SkillILU.user_id == practitioner_id)
+    eligible = eligible_query.all()
 
     for skill in eligible:
-        work_slots = WorkSlot.query.filter_by(
-            user_id=skill.user_id,
-            work_date=target_date,
-            status='present',
-        ).all()
+        work_slots = WorkSlot.query.filter_by(user_id=skill.user_id, work_date=target_date, status='present').all()
 
         for ws in work_slots:
             current = datetime.combine(target_date, ws.start_time)
@@ -109,45 +112,50 @@ def slots_for_treatment(treatment, target_date):
 
                 if not busy_user and not blocked and cabin:
                     key = current.strftime('%H:%M')
-                    slots_by_time.setdefault(key, {
-                        'time': key,
-                        'user': skill.user,
-                        'cabin': cabin,
-                        'start_at': current,
-                        'end_at': end_at,
-                    })
+                    label = key + '-' + str(skill.user_id)
+                    slots_by_time.setdefault(label, {'time': key, 'user': skill.user, 'cabin': cabin, 'start_at': current, 'end_at': end_at})
 
                 current += timedelta(minutes=30)
 
-    return [slots_by_time[k] for k in sorted(slots_by_time)]
+    return [slots_by_time[k] for k in sorted(slots_by_time, key=lambda k: slots_by_time[k]['start_at'])]
 
 
 @booking_bp.route('/')
 def choose_treatment():
-    treatments = Treatment.query.filter_by(is_active=True).order_by(Treatment.category, Treatment.name).all()
-    return render_template('booking/choose_treatment.html', treatments=treatments)
+    selected_institute_id = request.args.get('institute_id', type=int)
+    institutes = Institute.query.order_by(Institute.name).all()
+    treatments_query = Treatment.query.filter_by(is_active=True)
+    if selected_institute_id:
+        treatments_query = treatments_query.filter_by(institute_id=selected_institute_id)
+    treatments = treatments_query.order_by(Treatment.category, Treatment.name).all()
+    return render_template('booking/choose_treatment.html', treatments=treatments, institutes=institutes, selected_institute_id=selected_institute_id)
 
 
 @booking_bp.route('/<int:treatment_id>/calendrier')
 def month_calendar(treatment_id):
     treatment = Treatment.query.get_or_404(treatment_id)
+    practitioner_id = request.args.get('practitioner_id', type=int)
+    practitioners = _eligible_practitioners(treatment)
     today = date.today()
     days = []
     for i in range(31):
         d = today + timedelta(days=i)
-        days.append({'date': d, 'available': len(slots_for_treatment(treatment, d)) > 0})
-    return render_template('booking/month.html', treatment=treatment, days=days)
+        days.append({'date': d, 'available': len(slots_for_treatment(treatment, d, practitioner_id)) > 0})
+    return render_template('booking/month.html', treatment=treatment, days=days, practitioners=practitioners, selected_practitioner_id=practitioner_id)
 
 
 @booking_bp.route('/<int:treatment_id>/jour/<day>', methods=['GET', 'POST'])
 def day_slots(treatment_id, day):
     treatment = Treatment.query.get_or_404(treatment_id)
     target_date = datetime.strptime(day, '%Y-%m-%d').date()
-    slots = slots_for_treatment(treatment, target_date)
+    practitioner_id = request.args.get('practitioner_id', type=int)
+    practitioners = _eligible_practitioners(treatment)
+    slots = slots_for_treatment(treatment, target_date, practitioner_id)
 
     if request.method == 'POST':
         selected_time = request.form['time']
-        chosen = next((s for s in slots if s['time'] == selected_time), None)
+        selected_user = request.form.get('user_id', type=int)
+        chosen = next((s for s in slots if s['time'] == selected_time and (not selected_user or s['user'].id == selected_user)), None)
         if not chosen:
             flash('Ce creneau n est plus disponible.', 'danger')
             return redirect(request.url)
@@ -155,17 +163,9 @@ def day_slots(treatment_id, day):
         customer_name = request.form['customer_name']
         customer_email = request.form.get('customer_email', '')
         _sync_customer(customer_name, customer_email)
-        appointment = Appointment(
-            customer_name=customer_name,
-            customer_email=customer_email,
-            treatment=treatment,
-            user=chosen['user'],
-            cabin=chosen['cabin'],
-            start_at=chosen['start_at'],
-            end_at=chosen['end_at'],
-        )
+        appointment = Appointment(customer_name=customer_name, customer_email=customer_email, treatment=treatment, user=chosen['user'], cabin=chosen['cabin'], start_at=chosen['start_at'], end_at=chosen['end_at'])
         db.session.add(appointment)
         db.session.commit()
         return render_template('booking/confirmed.html', appointment=appointment)
 
-    return render_template('booking/day.html', treatment=treatment, target_date=target_date, slots=slots)
+    return render_template('booking/day.html', treatment=treatment, target_date=target_date, slots=slots, practitioners=practitioners, selected_practitioner_id=practitioner_id)
