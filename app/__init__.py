@@ -81,6 +81,7 @@ def create_app():
     from app.admin.routes import admin_bp
     from app.booking.routes import booking_bp
     from app.planning.routes import planning_bp
+    from app.week_planning.routes import week_planning_bp
     from app.ilu.routes import ilu_bp
     from app.stocks.routes import stocks_bp
     from app.routines.routes import routines_bp
@@ -96,6 +97,7 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(booking_bp, url_prefix='/reservation')
     app.register_blueprint(planning_bp, url_prefix='/admin/planning')
+    app.register_blueprint(week_planning_bp, url_prefix='/admin/planning-semaine')
     app.register_blueprint(ilu_bp, url_prefix='/admin/ilu')
     app.register_blueprint(stocks_bp, url_prefix='/admin/stocks')
     app.register_blueprint(routines_bp, url_prefix='/admin/routines')
