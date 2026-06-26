@@ -47,10 +47,17 @@ def documents():
         return redirect(url_for('admin.documents'))
     return render_template('admin/module_list.html', title='Documents', subtitle='Procedures, modes operatoires, DUERP, audits et versionnage documentaire.', items=DocumentRecord.query.order_by(DocumentRecord.created_at.desc()).all(), columns=['Titre','Categorie','Version','Revue'])
 
-@admin_bp.route('/qse')
+@admin_bp.route('/qse', methods=['GET','POST'])
 @login_required
 def qse():
-    return render_template('admin/module_list.html', title='QSE', subtitle='DUERP, audits, plans d actions, reclamations, presque accidents et environnement.', items=QSEAction.query.order_by(QSEAction.created_at.desc()).all(), columns=['Theme', 'Action', 'Responsable', 'Statut'])
+    if request.method == 'POST':
+        item = QSEAction(source=request.form.get('source','Audit'), theme=request.form.get('theme','Securite'), title=request.form['title'], description=request.form.get('description',''), responsible=request.form.get('responsible',''), due_date=parse_date(request.form.get('due_date')), status=request.form.get('status','open'))
+        db.session.add(item); db.session.commit()
+        return redirect(url_for('admin.qse'))
+    actions = QSEAction.query.order_by(QSEAction.created_at.desc()).all()
+    open_actions = [a for a in actions if a.status != 'closed']
+    late_actions = [a for a in open_actions if a.due_date and a.due_date < datetime.today().date()]
+    return render_template('qse/index.html', actions=actions, open_actions=open_actions, late_actions=late_actions)
 
 @admin_bp.route('/audit')
 @login_required
