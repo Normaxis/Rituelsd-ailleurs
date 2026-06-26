@@ -1,16 +1,24 @@
 let dragged=null;
 
+function isMobilePlanner(){
+  return window.matchMedia('(max-width:1200px)').matches;
+}
+
 function openDrawer(){
+  const board=document.querySelector('.planning-premium');
   const drawer=document.getElementById('appointmentDrawer');
   const backdrop=document.getElementById('drawerBackdrop');
+  if(board)board.classList.remove('panel-collapsed');
   if(drawer)drawer.classList.add('open');
-  if(backdrop)backdrop.classList.add('open');
+  if(backdrop&&isMobilePlanner())backdrop.classList.add('open');
 }
 
 function closeDrawer(){
+  const board=document.querySelector('.planning-premium');
   const drawer=document.getElementById('appointmentDrawer');
   const backdrop=document.getElementById('drawerBackdrop');
-  if(drawer)drawer.classList.remove('open');
+  if(board)board.classList.add('panel-collapsed');
+  if(isMobilePlanner()&&drawer)drawer.classList.remove('open');
   if(backdrop)backdrop.classList.remove('open');
 }
 
@@ -24,10 +32,16 @@ document.addEventListener('DOMContentLoaded',function(){
   const selectedSlotLabel=document.getElementById('selectedSlotLabel');
   const drawerClose=document.getElementById('drawerClose');
   const drawerBackdrop=document.getElementById('drawerBackdrop');
+  const railOpen=document.getElementById('drawerOpenRail');
 
   document.querySelectorAll('.new-rdv-trigger').forEach(function(btn){btn.addEventListener('click',openDrawer);});
+  if(railOpen)railOpen.addEventListener('click',openDrawer);
   if(drawerClose)drawerClose.addEventListener('click',closeDrawer);
   if(drawerBackdrop)drawerBackdrop.addEventListener('click',closeDrawer);
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')closeDrawer();
+  });
 
   document.addEventListener('dragstart',function(e){
     const item=e.target.closest('[data-event-id]');
