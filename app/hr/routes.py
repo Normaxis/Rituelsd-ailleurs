@@ -17,6 +17,14 @@ def parse_time(value):
     return datetime.strptime(value, '%H:%M').time() if value else None
 
 
+def user_week_schedule_map():
+    schedules = WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all()
+    mapped = {}
+    for item in schedules:
+        mapped.setdefault(item.user_id, {})[item.weekday] = item
+    return mapped
+
+
 @hr_bp.route('/')
 @login_required
 def dashboard():
@@ -40,7 +48,28 @@ def personnel():
         flash('Salarie ajoute.', 'success')
         return redirect(url_for('hr.personnel'))
     users = User.query.order_by(User.first_name, User.last_name).all()
-    return render_template('hr/personnel.html', users=users, roles=Role.query.all(), institutes=Institute.query.all(), cabins=Cabin.query.order_by(Cabin.name).all(), user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), weekdays=WEEKDAYS)
+    return render_template('hr/personnel.html', users=users, roles=Role.query.all(), institutes=Institute.query.all(), cabins=Cabin.query.order_by(Cabin.name).all(), user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), user_week_schedules=user_week_schedule_map(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), weekdays=WEEKDAYS)
+
+
+@hr_bp.route('/personnel/horaires-semaine', methods=['POST'])
+@login_required
+def save_user_week_schedule():
+    user_id = int(request.form['user_id'])
+    WeeklyUserSchedule.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+    for weekday in range(7):
+        if not request.form.get(f'active_{weekday}'):
+            continue
+        start_time = parse_time(request.form.get(f'start_{weekday}'))
+        end_time = parse_time(request.form.get(f'end_{weekday}'))
+        if not start_time or not end_time or end_time <= start_time:
+            flash(f'Horaire invalide pour {WEEKDAYS[weekday]}.', 'error')
+            db.session.rollback()
+            return redirect(url_for('hr.personnel'))
+        item = WeeklyUserSchedule(user_id=user_id, weekday=weekday, start_time=start_time, end_time=end_time, status=request.form.get(f'status_{weekday}', 'present'), note=request.form.get(f'note_{weekday}', ''))
+        db.session.add(item)
+    db.session.commit()
+    flash('Horaires de base de la semaine enregistres.', 'success')
+    return redirect(url_for('hr.personnel'))
 
 
 @hr_bp.route('/personnel/horaires-base', methods=['POST'])
