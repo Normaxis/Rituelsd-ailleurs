@@ -22,6 +22,7 @@ def create_app():
     from app.giftcards.routes import giftcards_bp
     from app.suppliers.routes import suppliers_bp
     from app.appointments.routes import appointments_bp
+    from app.waitlist.routes import waitlist_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -36,6 +37,7 @@ def create_app():
     app.register_blueprint(giftcards_bp, url_prefix='/admin/cartes-cadeaux')
     app.register_blueprint(suppliers_bp, url_prefix='/admin/fournisseurs')
     app.register_blueprint(appointments_bp, url_prefix='/admin/rendez-vous')
+    app.register_blueprint(waitlist_bp)
 
     with app.app_context():
         db.create_all()
