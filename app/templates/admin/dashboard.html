@@ -1,1 +1,60 @@
-{% extends 'admin/base_admin.html' %}{% block admin_content %}<p class="eyebrow">Pilotage global</p><h1>Tableau de bord dirigeante</h1><p class="muted">Vue rapide de l'activite du jour, des alertes, des ventes, du planning et des modules importants.</p><div class="grid cards"><div class="card"><span>Rendez-vous aujourd'hui</span><h2>{{ today_appointments|length }}</h2><p>Rendez-vous planifies sur la journee.</p><a class="btn small" href="{{ url_for('appointments.index') }}">Voir</a></div><div class="card"><span>CA potentiel du jour</span><h2>{{ '%.0f'|format(today_revenue) }} euros</h2><p>Base sur les prestations non annulees du jour.</p></div><div class="card"><span>Stocks bas</span><h2>{{low_stock}}</h2><p>Produits sous le seuil minimum.</p><a class="btn small" href="{{ url_for('stocks.index') }}">Ouvrir</a></div></div><section class="grid cards"><article class="card"><span>Alertes RH</span><h3>{{ habilitations_due + trainings_due }} alertes</h3><p>{{ habilitations_due }} habilitations et {{ trainings_due }} formations a suivre sous 60 jours.</p><a class="btn small" href="{{ url_for('hr.dashboard') }}">Ouvrir RH</a></article><article class="card"><span>QSE</span><h3>{{ late_qse }} en retard</h3><p>{{ open_qse }} actions QSE ouvertes au total.</p><a class="btn small" href="{{ url_for('admin.qse') }}">Ouvrir QSE</a></article><article class="card"><span>Cartes cadeaux</span><h3>{{ giftcards_expiring }} expirantes</h3><p>Cartes actives avec validite proche.</p><a class="btn small" href="{{ url_for('giftcards.index') }}">Ouvrir</a></article></section><section class="grid cards"><article class="card"><span>Clients</span><h3>{{customers}} fiches</h3><p>Historique, preferences, allergies, contre-indications et fidelite.</p><a class="btn small" href="{{ url_for('customers.index') }}">Ouvrir</a></article><article class="card"><span>Offre</span><h3>{{treatments}} prestations</h3><p>{{cabins}} cabines et matrice ILU pour la reservation.</p><a class="btn small" href="{{ url_for('admin.treatments') }}">Gerer</a></article><article class="card"><span>Documents</span><h3>{{documents}} documents</h3><p>Procedures, modes operatoires, audits, DUERP et versionnage.</p><a class="btn small" href="{{ url_for('admin.documents') }}">Ouvrir</a></article></section><h2>Rendez-vous du jour</h2><div class="table-wrap"><table><tr><th>Heure</th><th>Client</th><th>Prestation</th><th>Praticienne</th><th>Cabine</th><th>Statut</th></tr>{% for a in today_appointments %}<tr><td>{{a.start_at.strftime('%H:%M')}}</td><td>{{a.customer_name}}</td><td>{{a.treatment.name}}</td><td>{{a.user.full_name}}</td><td>{{a.cabin.name}}</td><td>{{a.status}}</td></tr>{% else %}<tr><td colspan="6">Aucun rendez-vous aujourd'hui.</td></tr>{% endfor %}</table></div>{% endblock %}
+{% extends 'admin/base_admin.html' %}
+{% block admin_content %}
+<style>
+.demo-dashboard{display:grid;gap:18px}.demo-hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.8fr);gap:16px;align-items:stretch}.demo-panel{background:#fff;border:1px solid #eadfd2;border-radius:20px;padding:20px;box-shadow:0 14px 36px rgba(45,32,20,.06)}.demo-panel.gold{background:linear-gradient(135deg,#fff8ef,#fffdf9)}.demo-eyebrow{font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#b88a3d;margin:0 0 8px}.demo-title{font-size:34px;line-height:1.05;margin:0;color:#231913;letter-spacing:-.05em}.demo-muted{color:#7a6a5c;margin:8px 0 0;line-height:1.45}.demo-status{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.demo-status span{border-radius:999px;background:#f1e7da;color:#5d4a38;padding:7px 10px;font-size:12px;font-weight:900}.demo-status .ok{background:#e4f4eb;color:#23573a}.demo-actions{display:grid;gap:9px;margin-top:16px}.demo-actions a{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border-radius:12px;text-decoration:none;background:#fff;border:1px solid #eadfd2;color:#2f251d;font-weight:900}.demo-actions a.primary{background:#b88a3d;border-color:#b88a3d;color:#fff}.demo-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.demo-kpi{background:#fff;border:1px solid #eadfd2;border-radius:16px;padding:15px}.demo-kpi span{display:block;color:#8a7a6a;font-size:11px;text-transform:uppercase;font-weight:900;letter-spacing:.08em}.demo-kpi strong{display:block;font-size:28px;margin-top:4px;color:#2f251d}.demo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.demo-card{background:#fff;border:1px solid #eadfd2;border-radius:16px;padding:16px}.demo-card h3{margin:0 0 6px;color:#2f251d}.demo-card p{margin:0 0 12px;color:#7a6a5c;font-size:13px;line-height:1.4}.demo-card a{font-weight:900;text-decoration:none;color:#8a5d21}.demo-table{background:#fff;border:1px solid #eadfd2;border-radius:16px;overflow:hidden}.demo-table h2{margin:0;padding:16px;border-bottom:1px solid #eadfd2}.demo-table table{width:100%;border-collapse:collapse}.demo-table th,.demo-table td{padding:10px;border-bottom:1px solid #f0e7dc;text-align:left;font-size:13px}.demo-table th{background:#fff8ef;color:#5d4a38;font-size:11px;text-transform:uppercase;letter-spacing:.08em}.demo-empty{padding:18px;color:#8a7a6a;font-weight:800}@media(max-width:1000px){.demo-hero,.demo-grid{grid-template-columns:1fr}.demo-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.demo-kpis{grid-template-columns:1fr}.demo-title{font-size:28px}}
+</style>
+<section class="demo-dashboard">
+  <div class="demo-hero">
+    <article class="demo-panel gold">
+      <p class="demo-eyebrow">Presentation fonctionnelle</p>
+      <h1 class="demo-title">Tableau de bord Rituels d'Ailleurs</h1>
+      <p class="demo-muted">Vue rapide pour montrer le potentiel du site : planning, rendez-vous, clients, stock, RH, QSE et pilotage multi-modules.</p>
+      <div class="demo-status">
+        <span class="ok">Demo gratuite active</span>
+        <span>SQLite compatible</span>
+        <span>Planning jour + semaine</span>
+        <span>Sans migration obligatoire</span>
+      </div>
+    </article>
+    <aside class="demo-panel">
+      <p class="demo-eyebrow">Acces rapides</p>
+      <div class="demo-actions">
+        <a class="primary" href="{{ url_for('planning.index') }}">Ouvrir planning jour <b>›</b></a>
+        <a href="{{ url_for('week_planning.index') }}">Ouvrir planning semaine <b>›</b></a>
+        <a href="{{ url_for('booking.choose_treatment') }}">Parcours reservation client <b>›</b></a>
+        <a href="{{ url_for('admin.cabin_compatibilities') }}">Compatibilites cabines <b>›</b></a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="demo-kpis">
+    <div class="demo-kpi"><span>RDV aujourd'hui</span><strong>{{ today_appointments|length }}</strong></div>
+    <div class="demo-kpi"><span>CA potentiel jour</span><strong>{{ '%.0f'|format(today_revenue) }} €</strong></div>
+    <div class="demo-kpi"><span>Stocks bas</span><strong>{{ low_stock }}</strong></div>
+    <div class="demo-kpi"><span>Alertes RH</span><strong>{{ habilitations_due + trainings_due }}</strong></div>
+  </div>
+
+  <div class="demo-grid">
+    <article class="demo-card"><h3>Planning</h3><p>Vue jour operationnelle et vue semaine lisible pour la presentation.</p><a href="{{ url_for('week_planning.index') }}">Voir la semaine</a></article>
+    <article class="demo-card"><h3>Clients & ventes</h3><p>{{ customers }} fiches clients, {{ giftcards }} cartes cadeaux, {{ giftcards_expiring }} expirantes.</p><a href="{{ url_for('customers.index') }}">Ouvrir clients</a></article>
+    <article class="demo-card"><h3>Offre institut</h3><p>{{ treatments }} prestations, {{ cabins }} cabines et matrice ILU / compatibilites.</p><a href="{{ url_for('admin.treatments') }}">Gerer l'offre</a></article>
+    <article class="demo-card"><h3>QSE</h3><p>{{ open_qse }} actions ouvertes, dont {{ late_qse }} en retard.</p><a href="{{ url_for('admin.qse') }}">Ouvrir QSE</a></article>
+    <article class="demo-card"><h3>RH</h3><p>{{ habilitations_due }} habilitations et {{ trainings_due }} formations a suivre.</p><a href="{{ url_for('hr.dashboard') }}">Ouvrir RH</a></article>
+    <article class="demo-card"><h3>Documents</h3><p>{{ documents }} documents suivis : procedures, modes operatoires, audits et DUERP.</p><a href="{{ url_for('admin.documents') }}">Ouvrir documents</a></article>
+  </div>
+
+  <section class="demo-table">
+    <h2>Rendez-vous du jour</h2>
+    {% if today_appointments %}
+    <table>
+      <tr><th>Heure</th><th>Client</th><th>Prestation</th><th>Praticienne</th><th>Cabine</th><th>Statut</th></tr>
+      {% for a in today_appointments %}
+      <tr><td>{{ a.start_at.strftime('%H:%M') }}</td><td>{{ a.customer_name }}</td><td>{{ a.treatment.name }}</td><td>{{ a.user.full_name }}</td><td>{{ a.cabin.name }}</td><td>{{ a.status }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <div class="demo-empty">Aucun rendez-vous aujourd'hui. La demo reste utilisable via le planning et le parcours reservation.</div>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}
