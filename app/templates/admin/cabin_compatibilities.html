@@ -1,0 +1,57 @@
+{% extends 'admin/base_admin.html' %}
+{% block admin_content %}
+<style>
+  .compat-page{display:grid;gap:18px}.compat-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}.compat-head h1{margin:0}.compat-hint{background:#fff8ef;border:1px solid #eadfd2;border-radius:14px;padding:14px;color:#6e563a;max-width:760px}.compat-table-wrap{overflow:auto;background:#fff;border:1px solid #eadfd2;border-radius:16px}.compat-table{width:100%;border-collapse:collapse;min-width:760px}.compat-table th,.compat-table td{border-bottom:1px solid #f0e4d8;border-right:1px solid #f0e4d8;padding:12px;text-align:center}.compat-table th{background:#fbf4eb;color:#4a382b;font-size:12px;text-transform:uppercase}.compat-table td:first-child,.compat-table th:first-child{text-align:left;position:sticky;left:0;background:#fffaf4;z-index:2;min-width:240px}.compat-treatment small{display:block;color:#8a7a6a;font-weight:600}.compat-check{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid #dac8b4;border-radius:12px;background:#fff}.compat-check input{width:18px;height:18px}.compat-open{display:inline-flex;border-radius:999px;padding:4px 8px;background:#eef7ef;color:#2d6b3f;font-size:11px;font-weight:800}.compat-actions{display:flex;justify-content:flex-end;gap:10px}.compat-save{height:40px;border:0;border-radius:10px;background:#b88a3d;color:#fff;font-weight:900;padding:0 18px}.compat-empty{padding:24px;background:#fff8ef;border:1px solid #eadfd2;border-radius:14px;color:#6e563a}
+</style>
+
+<div class="compat-page">
+  <div class="compat-head">
+    <div>
+      <h1>Compatibilites cabine / prestation</h1>
+      <p>Parametrez quelles cabines peuvent recevoir chaque prestation.</p>
+    </div>
+    <a class="week-secondary" href="{{ url_for('planning.index') }}">Retour planning</a>
+  </div>
+
+  <div class="compat-hint">
+    <strong>Regle de fonctionnement :</strong><br>
+    Si aucune cabine n'est cochee pour une prestation, le planning considere que toutes les cabines restent autorisees. Des qu'au moins une cabine est cochee pour une prestation, seules les cabines cochees seront acceptees lors de la creation ou du deplacement d'un rendez-vous.
+  </div>
+
+  {% if treatments and cabins %}
+  <form method="post">
+    <div class="compat-table-wrap">
+      <table class="compat-table">
+        <thead>
+          <tr>
+            <th>Prestation</th>
+            {% for cabin in cabins %}<th>{{ cabin.name }}<br><small>{{ cabin.cabin_type }}</small></th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for treatment in treatments %}
+          <tr>
+            <td class="compat-treatment">
+              <strong>{{ treatment.name }}</strong>
+              <small>{{ treatment.category }} · {{ treatment.duration_minutes }} min</small>
+              {% if treatment.id not in configured_treatment_ids %}<span class="compat-open">Toutes autorisees actuellement</span>{% endif %}
+            </td>
+            {% for cabin in cabins %}
+            <td>
+              <label class="compat-check" title="Autoriser {{ cabin.name }} pour {{ treatment.name }}">
+                <input type="checkbox" name="allowed" value="{{ treatment.id }}:{{ cabin.id }}" {{ 'checked' if (treatment.id, cabin.id) in allowed_pairs }}>
+              </label>
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="compat-actions"><button class="compat-save" type="submit">Enregistrer les compatibilites</button></div>
+  </form>
+  {% else %}
+  <div class="compat-empty">Ajoutez au moins une prestation active et une cabine active avant de parametrer les compatibilites.</div>
+  {% endif %}
+</div>
+{% endblock %}
