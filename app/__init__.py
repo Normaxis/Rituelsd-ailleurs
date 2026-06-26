@@ -6,7 +6,7 @@ from app.models import *
 
 def sync_staff_directory():
     role_data = {
-        'general_admin': 'Grande patronne',
+        'general_admin': 'Direction',
         'agency_manager': "Responsable d'agence",
         'practitioner': 'Masseuse',
     }
@@ -30,6 +30,7 @@ def sync_staff_directory():
     institutes = Institute.query.order_by(Institute.id).all()
     institute_id = institutes[0].id if institutes else None
     default_role = Role.query.filter_by(name='practitioner').first()
+    used_ids = set()
     for index, item in enumerate(staff_names):
         username, first_name, last_name, role_name = item
         role = Role.query.filter_by(name=role_name).first() or default_role
@@ -39,6 +40,7 @@ def sync_staff_directory():
         if not user:
             user = User(username=username, first_name=first_name, last_name=last_name, password_hash='not-for-login', role_id=role.id, institute_id=institute_id, is_active=True)
             db.session.add(user)
+            db.session.flush()
         user.first_name = first_name
         user.last_name = last_name
         if role:
@@ -46,6 +48,10 @@ def sync_staff_directory():
         if not user.institute_id:
             user.institute_id = institute_id
         user.is_active = True
+        used_ids.add(user.id)
+    for user in User.query.filter_by(is_active=True).all():
+        if user.id not in used_ids:
+            user.is_active = False
     db.session.commit()
 
 
