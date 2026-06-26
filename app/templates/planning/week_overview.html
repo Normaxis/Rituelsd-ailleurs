@@ -7,7 +7,7 @@
   <header class="week-head">
     <div>
       <h1>Planning semaine</h1>
-      <p>Du {{ week_start.strftime('%d/%m/%Y') }} au {{ week_end_label }}</p>
+      <p>Du {{ week_start.strftime('%d/%m/%Y') }} au {{ week_end.strftime('%d/%m/%Y') }}</p>
     </div>
     <nav class="week-actions">
       <a href="{{ url_for('week_planning.index', date=prev_week.isoformat()) }}">‹ Precedente</a>
