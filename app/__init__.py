@@ -4,6 +4,42 @@ from app.extensions import db
 from app.models import *
 
 
+def sync_staff_directory():
+    role_data = {
+        'general_admin': 'Grande patronne',
+        'agency_manager': "Responsable d'agence",
+        'practitioner': 'Masseuse',
+    }
+    for key, label in role_data.items():
+        role = Role.query.filter_by(name=key).first()
+        if role:
+            role.label = label
+        else:
+            db.session.add(Role(name=key, label=label))
+    db.session.commit()
+
+    staff_names = [
+        ('Stéphanie', 'LECOQ', 'general_admin'),
+        ('Émilie', '', 'agency_manager'),
+        ('Julie', '', 'agency_manager'),
+        ('Manon', 'Gilette', 'practitioner'),
+        ('Elise', 'SNL', 'practitioner'),
+        ('Léonie', 'Wbx', 'practitioner'),
+    ]
+    users = User.query.filter_by(is_active=True).order_by(User.id).all()
+    default_role = Role.query.filter_by(name='practitioner').first()
+    for index, item in enumerate(staff_names):
+        first_name, last_name, role_name = item
+        role = Role.query.filter_by(name=role_name).first() or default_role
+        if index < len(users):
+            user = users[index]
+            user.first_name = first_name
+            user.last_name = last_name
+            if role:
+                user.role_id = role.id
+    db.session.commit()
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -41,5 +77,6 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        sync_staff_directory()
 
     return app
