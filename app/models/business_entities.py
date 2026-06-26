@@ -48,6 +48,35 @@ class Supplier(db.Model):
     notes = db.Column(db.Text, default='')
 
 
+class SupplierOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
+    reference = db.Column(db.String(100), default='')
+    order_date = db.Column(db.Date)
+    expected_date = db.Column(db.Date)
+    received_date = db.Column(db.Date)
+    status = db.Column(db.String(40), default='draft')
+    total_amount = db.Column(db.Float, default=0)
+    notes = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    supplier = db.relationship('Supplier')
+
+
+class SupplierOrderLine(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('supplier_order.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
+    label = db.Column(db.String(160), default='')
+    quantity = db.Column(db.Float, default=0)
+    unit_price = db.Column(db.Float, default=0)
+    order = db.relationship('SupplierOrder', backref='lines')
+    product = db.relationship('Product')
+
+    @property
+    def line_total(self):
+        return (self.quantity or 0) * (self.unit_price or 0)
+
+
 class DocumentRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(180), nullable=False)
