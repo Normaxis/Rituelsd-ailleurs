@@ -20,6 +20,7 @@ def create_app():
     from app.hr.routes import hr_bp
     from app.customers.routes import customers_bp
     from app.giftcards.routes import giftcards_bp
+    from app.suppliers.routes import suppliers_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -32,6 +33,7 @@ def create_app():
     app.register_blueprint(hr_bp, url_prefix='/admin/rh')
     app.register_blueprint(customers_bp, url_prefix='/admin/clients')
     app.register_blueprint(giftcards_bp, url_prefix='/admin/cartes-cadeaux')
+    app.register_blueprint(suppliers_bp, url_prefix='/admin/fournisseurs')
 
     with app.app_context():
         db.create_all()
