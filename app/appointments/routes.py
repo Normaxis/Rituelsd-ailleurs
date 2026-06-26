@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import db
-from app.models import Appointment, Cabin, StockMovement, Treatment, TreatmentConsumption, User
+from app.models import Appointment, Cabin, StockMovement, Treatment, TreatmentConsumption, User, WaitlistEntry
 from app.utils.auth import login_required
 
 appointments_bp = Blueprint('appointments', __name__)
@@ -37,6 +37,9 @@ def index():
 @appointments_bp.route('/nouveau', methods=['GET','POST'])
 @login_required
 def create():
+    waitlist_id = request.form.get('waitlist_id') or request.args.get('waitlist_id')
+    waitlist_entry = WaitlistEntry.query.get(int(waitlist_id)) if waitlist_id else None
+
     if request.method == 'POST':
         treatment = Treatment.query.get_or_404(int(request.form['treatment_id']))
         user_id = int(request.form['user_id'])
@@ -45,13 +48,17 @@ def create():
         end_at = start_at + timedelta(minutes=treatment.duration_minutes)
         if _has_conflict(user_id, cabin_id, start_at, end_at):
             flash('Conflit detecte sur la praticienne ou la cabine.', 'danger')
-            return redirect(url_for('appointments.create'))
+            target = url_for('appointments.create', waitlist_id=waitlist_entry.id) if waitlist_entry else url_for('appointments.create')
+            return redirect(target)
         appt = Appointment(customer_name=request.form['customer_name'], customer_email=request.form.get('customer_email',''), treatment_id=treatment.id, user_id=user_id, cabin_id=cabin_id, start_at=start_at, end_at=end_at, status='confirmed')
         db.session.add(appt)
+        if waitlist_entry:
+            waitlist_entry.status = 'converted'
         db.session.commit()
         flash('Rendez-vous cree.', 'success')
         return redirect(url_for('appointments.index', date=start_at.date().isoformat()))
-    return render_template('appointments/form.html', treatments=Treatment.query.filter_by(is_active=True).order_by(Treatment.name).all(), users=User.query.filter_by(is_active=True).order_by(User.full_name).all(), cabins=Cabin.query.filter_by(is_active=True).order_by(Cabin.name).all(), today=date.today())
+
+    return render_template('appointments/form.html', treatments=Treatment.query.filter_by(is_active=True).order_by(Treatment.name).all(), users=User.query.filter_by(is_active=True).order_by(User.last_name, User.first_name).all(), cabins=Cabin.query.filter_by(is_active=True).order_by(Cabin.name).all(), today=date.today(), waitlist_entry=waitlist_entry)
 
 
 @appointments_bp.route('/<int:appointment_id>/realiser', methods=['POST'])
