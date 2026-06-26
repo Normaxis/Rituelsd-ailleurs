@@ -1,0 +1,51 @@
+<div class="week-plan-backdrop" id="weekPlanBackdrop"></div>
+<aside class="week-plan-modal" id="weekPlanModal" aria-hidden="true">
+  <div class="week-plan-head">
+    <div><p class="eyebrow">Planification hebdomadaire</p><h2>Planifier la semaine</h2><span>{{ week_start.strftime('%d/%m/%Y') }} - {{ (week_start + timedelta(days=6)).strftime('%d/%m/%Y') }}</span></div>
+    <button type="button" class="week-plan-close" id="weekPlanClose">×</button>
+  </div>
+
+  <form method="post" action="{{ url_for('planning.weekly_plan') }}" class="week-plan-form">
+    <input type="hidden" name="view" value="{{ selected_view }}">
+    <input type="hidden" name="action" value="generate_base">
+    <label>Semaine a planifier</label>
+    <input type="date" name="week_start" value="{{ week_start.isoformat() }}" required>
+    <div class="week-checks">
+      <label><input type="checkbox" name="apply_staff" value="1" checked> Generer les horaires des praticiennes</label>
+      <label><input type="checkbox" name="apply_cabins" value="1" checked> Generer les disponibilites cabines</label>
+      <label><input type="checkbox" name="replace_staff" value="1"> Remplacer les horaires salaries de la semaine</label>
+      <label><input type="checkbox" name="replace_cabins" value="1"> Remplacer les dispos cabines de la semaine</label>
+    </div>
+    <button type="submit" class="week-primary">Generer depuis les horaires de base</button>
+  </form>
+
+  <div class="week-plan-section">
+    <h3>Ajouter un creneau manuel</h3>
+    <form method="post" action="{{ url_for('planning.weekly_plan') }}" class="week-plan-form">
+      <input type="hidden" name="view" value="{{ selected_view }}">
+      <input type="hidden" name="action" value="manual_slot">
+      <input type="hidden" name="week_start" value="{{ week_start.isoformat() }}">
+      <label>Type</label>
+      <select name="resource_type" id="weekResourceType"><option value="user">Praticienne</option><option value="cabin">Cabine</option></select>
+      <label>Praticienne</label>
+      <select name="user_id">{% for u in users %}<option value="{{ u.id }}">{{ u.full_name }}</option>{% endfor %}</select>
+      <label>Cabine</label>
+      <select name="cabin_id">{% for c in cabins %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
+      <label>Jour</label>
+      <select name="work_date">{% for d in week_days %}<option value="{{ d.date.isoformat() }}">{{ d.label }} {{ d.date.strftime('%d/%m') }}</option>{% endfor %}</select>
+      <div class="week-grid-2"><div><label>Debut</label><input type="time" name="start_time" value="09:00" required></div><div><label>Fin</label><input type="time" name="end_time" value="17:00" required></div></div>
+      <label>Statut praticienne</label><select name="user_status"><option value="present">Disponible</option><option value="off">Repos</option><option value="holiday">Conge</option><option value="training">Formation</option></select>
+      <label>Statut cabine</label><select name="cabin_status"><option value="available">Disponible</option><option value="closed">Fermee</option><option value="maintenance">Maintenance</option></select>
+      <label>Note</label><input name="note" placeholder="Ex : ouverture exceptionnelle, remplacement...">
+      <button type="submit" class="week-primary">Ajouter a la semaine</button>
+    </form>
+  </div>
+
+  <div class="week-plan-section">
+    <h3>Modeles disponibles</h3>
+    <div class="week-model-list">
+      {% for s in user_base_schedules %}<span>{{ s.user.full_name }} · {{ weekdays[s.weekday] }} · {{ s.start_time.strftime('%H:%M') }}-{{ s.end_time.strftime('%H:%M') }}</span>{% endfor %}
+      {% for s in cabin_base_schedules %}<span>{{ s.cabin.name }} · {{ weekdays[s.weekday] }} · {{ s.start_time.strftime('%H:%M') }}-{{ s.end_time.strftime('%H:%M') }}</span>{% endfor %}
+    </div>
+  </div>
+</aside>
