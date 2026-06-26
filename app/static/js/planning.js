@@ -22,40 +22,49 @@ function closeDrawer(){
   if(backdrop)backdrop.classList.remove('open');
 }
 
-function styleAvailabilityBlocks(){
-  document.querySelectorAll('.appointment-card-premium.block-present').forEach(function(block){
-    block.style.pointerEvents='none';
-    block.style.zIndex='0';
-    block.style.left='0';
-    block.style.right='0';
-    block.style.borderRadius='0';
-    block.style.border='0';
-    block.style.background='rgba(82,190,119,.16)';
-    block.style.color='transparent';
-    block.style.boxShadow='none';
-    block.style.padding='0';
-    block.querySelectorAll('*').forEach(function(child){child.style.display='none';});
+function markAvailableSlots(){
+  document.querySelectorAll('.premium-track').forEach(function(track){
+    const presentBlocks=Array.from(track.querySelectorAll('.appointment-card-premium.block-present'));
+    const slotCells=Array.from(track.querySelectorAll('.slot-drop'));
+    const hasUserResource=track.closest('.premium-resource')&&track.closest('.premium-resource').dataset.resourceType==='user';
+
+    slotCells.forEach(function(cell){
+      if(!hasUserResource){
+        cell.dataset.available='1';
+        return;
+      }
+      const rect=cell.getBoundingClientRect();
+      const middleY=(rect.top+rect.bottom)/2;
+      const available=presentBlocks.some(function(block){
+        const blockRect=block.getBoundingClientRect();
+        return middleY>=blockRect.top&&middleY<=blockRect.bottom;
+      });
+      cell.dataset.available=available?'1':'0';
+      cell.classList.toggle('is-available',available);
+      cell.classList.toggle('is-unavailable',!available);
+      if(available){
+        cell.style.background='rgba(82,190,119,.14)';
+        cell.style.borderBottom='1px solid rgba(82,190,119,.22)';
+      }else{
+        cell.style.background='transparent';
+      }
+    });
+
+    presentBlocks.forEach(function(block){
+      block.style.display='none';
+    });
   });
 }
 
 function slotIsInAvailability(cell){
   if(cell.dataset.resourceType!=='user')return true;
-  const track=cell.closest('.premium-track');
-  if(!track)return false;
-  const availabilityBlocks=track.querySelectorAll('.appointment-card-premium.block-present');
-  if(!availabilityBlocks.length)return false;
-  const rect=cell.getBoundingClientRect();
-  const middleY=(rect.top+rect.bottom)/2;
-  return Array.from(availabilityBlocks).some(function(block){
-    const blockRect=block.getBoundingClientRect();
-    return middleY>=blockRect.top&&middleY<=blockRect.bottom;
-  });
+  return cell.dataset.available==='1';
 }
 
 document.addEventListener('DOMContentLoaded',function(){
   const board=document.querySelector('.planning-premium');
   if(!board)return;
-  styleAvailabilityBlocks();
+  markAvailableSlots();
   const createDate=document.getElementById('createDate');
   const createTime=document.getElementById('createTime');
   const createUser=document.getElementById('createUser');
@@ -116,7 +125,7 @@ document.addEventListener('DOMContentLoaded',function(){
         alert('Impossible : la praticienne n est pas disponible sur ce creneau.');
         return;
       }
-      const payload={event_type:dragged.event_type,event_id:dragged.event_id,resource_type:cell.dataset.resourceType,resource_id:cell.dataset.resourceId,time:cell.dataset.time,date:board.dataset.date};
+      const payload={event_type:dragged.event_type,event_id:dragged.eventId||dragged.event_id,resource_type:cell.dataset.resourceType,resource_id:cell.dataset.resourceId,time:cell.dataset.time,date:board.dataset.date};
       fetch('/admin/planning/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
         .then(function(r){return r.json().then(function(j){return {ok:r.ok,body:j};});})
         .then(function(res){if(res.ok&&res.body.ok){window.location.reload();}else{alert(res.body.message||'Deplacement impossible');}})
