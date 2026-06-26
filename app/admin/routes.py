@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for
 from app.extensions import db
 from app.models import Treatment, Cabin, User, AuditLog, Institute, Customer, GiftCard, Supplier, DocumentRecord, QSEAction, Product
@@ -5,21 +6,13 @@ from app.utils.auth import login_required, current_user
 
 admin_bp = Blueprint('admin', __name__)
 
+def parse_date(value):
+    return datetime.strptime(value, '%Y-%m-%d').date() if value else None
+
 @admin_bp.route('/')
 @login_required
 def dashboard():
-    return render_template(
-        'admin/dashboard.html',
-        treatments=Treatment.query.count(),
-        cabins=Cabin.query.count(),
-        users=User.query.count(),
-        customers=Customer.query.count(),
-        giftcards=GiftCard.query.count(),
-        suppliers=Supplier.query.count(),
-        documents=DocumentRecord.query.count(),
-        qse_actions=QSEAction.query.count(),
-        low_stock=Product.query.filter(Product.quantity <= Product.alert_threshold).count(),
-    )
+    return render_template('admin/dashboard.html', treatments=Treatment.query.count(), cabins=Cabin.query.count(), users=User.query.count(), customers=Customer.query.count(), giftcards=GiftCard.query.count(), suppliers=Supplier.query.count(), documents=DocumentRecord.query.count(), qse_actions=QSEAction.query.count(), low_stock=Product.query.filter(Product.quantity <= Product.alert_threshold).count())
 
 @admin_bp.route('/prestations', methods=['GET','POST'])
 @login_required
@@ -45,25 +38,14 @@ def cabins():
         return redirect(url_for('admin.cabins'))
     return render_template('admin/cabins.html', cabins=Cabin.query.all(), institutes=Institute.query.all())
 
-@admin_bp.route('/clients')
-@login_required
-def customers():
-    return render_template('admin/module_list.html', title='Clients', subtitle='Fiches clients, preferences, allergies, contre-indications et fidelite.', items=Customer.query.order_by(Customer.created_at.desc()).all(), columns=['Nom', 'Email', 'Telephone', 'Points'])
-
-@admin_bp.route('/cartes-cadeaux')
-@login_required
-def giftcards():
-    return render_template('admin/module_list.html', title='Cartes cadeaux', subtitle='Cartes cadeaux, montants, prestations, validites et statuts.', items=GiftCard.query.order_by(GiftCard.created_at.desc()).all(), columns=['Code', 'Libelle', 'Montant', 'Validite'])
-
-@admin_bp.route('/fournisseurs')
-@login_required
-def suppliers():
-    return render_template('admin/module_list.html', title='Fournisseurs', subtitle='Suivi des fournisseurs, contacts, commandes, livraisons et factures.', items=Supplier.query.order_by(Supplier.name).all(), columns=['Nom', 'Contact', 'Email', 'Telephone'])
-
-@admin_bp.route('/documents')
+@admin_bp.route('/documents', methods=['GET','POST'])
 @login_required
 def documents():
-    return render_template('admin/module_list.html', title='Documents', subtitle='Procedures, modes operatoires, DUERP, audits et versionnage documentaire.', items=DocumentRecord.query.order_by(DocumentRecord.created_at.desc()).all(), columns=['Titre', 'Categorie', 'Version', 'Revue'])
+    if request.method == 'POST':
+        doc = DocumentRecord(title=request.form['title'], category=request.form.get('category','Procedure'), version=request.form.get('version','1.0'), owner=request.form.get('owner',''), file_url=request.form.get('file_url',''), review_date=parse_date(request.form.get('review_date')))
+        db.session.add(doc); db.session.commit()
+        return redirect(url_for('admin.documents'))
+    return render_template('documents/index.html', docs=DocumentRecord.query.order_by(DocumentRecord.created_at.desc()).all())
 
 @admin_bp.route('/qse')
 @login_required
