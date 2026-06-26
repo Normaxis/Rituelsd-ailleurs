@@ -111,6 +111,8 @@ function slotIsInAvailability(cell){
 document.addEventListener('DOMContentLoaded',function(){
   const board=document.querySelector('.planning-premium');
   if(!board)return;
+  const csrfToken=board.dataset.csrfToken||'';
+  const canManage=board.dataset.canManage==='1';
   applyFrenchDateLabels();
   refreshAvailability();
   window.addEventListener('load',function(){applyFrenchDateLabels();refreshAvailability();});
@@ -143,6 +145,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 
   document.addEventListener('dragstart',function(e){
+    if(!canManage)return;
     const item=e.target.closest('[data-event-id]');
     if(!item)return;
     if(item.classList.contains('block-present'))return;
@@ -153,10 +156,12 @@ document.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('dragend',function(e){
     const item=e.target.closest('[data-event-id]');
     if(item)item.classList.remove('dragging');
+    dragged=null;
   });
 
   document.querySelectorAll('.slot-drop').forEach(function(cell){
     cell.addEventListener('click',function(){
+      if(!canManage)return;
       const resourceType=cell.dataset.resourceType;
       const resourceId=cell.dataset.resourceId;
       const slotTime=cell.dataset.time;
@@ -173,11 +178,13 @@ document.addEventListener('DOMContentLoaded',function(){
     });
 
     cell.addEventListener('dragover',function(e){
+      if(!canManage)return;
       e.preventDefault();
       if(slotIsInAvailability(cell))cell.classList.add('drop-hover');
     });
     cell.addEventListener('dragleave',function(){cell.classList.remove('drop-hover');});
     cell.addEventListener('drop',function(e){
+      if(!canManage)return;
       e.preventDefault();cell.classList.remove('drop-hover');
       if(!dragged)return;
       if(!slotIsInAvailability(cell)){
@@ -185,7 +192,11 @@ document.addEventListener('DOMContentLoaded',function(){
         return;
       }
       const payload={event_type:dragged.event_type,event_id:dragged.event_id,resource_type:cell.dataset.resourceType,resource_id:cell.dataset.resourceId,time:cell.dataset.time,date:board.dataset.date};
-      fetch('/admin/planning/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      fetch('/admin/planning/api/move',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-Token':csrfToken},
+        body:JSON.stringify(payload)
+      })
         .then(function(r){return r.json().then(function(j){return {ok:r.ok,body:j};});})
         .then(function(res){if(res.ok&&res.body.ok){window.location.reload();}else{alert(res.body.message||'Déplacement impossible');}})
         .catch(function(){alert('Erreur réseau');});

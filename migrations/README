@@ -1,0 +1,9 @@
+Single-database configuration for Flask-Migrate and Alembic.
+
+Commandes utiles :
+
+flask db migrate -m "message"
+flask db upgrade
+flask db downgrade
+
+Note : le projet conserve encore db.create_all() pour compatibilite avec le prototype existant. Les migrations ajoutees ici sont donc ecrites de facon prudente lorsque c'est necessaire.

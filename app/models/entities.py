@@ -53,6 +53,16 @@ class Cabin(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     institute = db.relationship('Institute')
 
+class TreatmentCabinCompatibility(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    treatment_id = db.Column(db.Integer, db.ForeignKey('treatment.id'), nullable=False)
+    cabin_id = db.Column(db.Integer, db.ForeignKey('cabin.id'), nullable=False)
+    is_allowed = db.Column(db.Boolean, default=True, nullable=False)
+    note = db.Column(db.String(255), default='')
+    treatment = db.relationship('Treatment')
+    cabin = db.relationship('Cabin')
+    __table_args__ = (db.UniqueConstraint('treatment_id', 'cabin_id', name='uniq_treatment_cabin_compatibility'),)
+
 class SkillILU(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -82,6 +92,7 @@ class Appointment(db.Model):
     start_at = db.Column(db.DateTime, nullable=False)
     end_at = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(40), default='confirmed')
+    note = db.Column(db.Text, default='')
     treatment = db.relationship('Treatment')
     user = db.relationship('User')
     cabin = db.relationship('Cabin')
