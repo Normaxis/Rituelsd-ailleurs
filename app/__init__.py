@@ -61,6 +61,8 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    import app.audit_hooks  # noqa: F401
+
     from app.auth.routes import auth_bp
     from app.public.routes import public_bp
     from app.admin.routes import admin_bp
