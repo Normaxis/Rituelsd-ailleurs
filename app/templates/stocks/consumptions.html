@@ -1,14 +1,26 @@
 {% extends 'admin/base_admin.html' %}
 {% block admin_content %}
 <style>
-.consume-page{display:grid;gap:18px}.consume-hero{background:linear-gradient(135deg,#fff8ef,#fff);border:1px solid #eadfd2;border-radius:20px;padding:22px}.consume-hero h1{margin:0;font-size:32px;letter-spacing:-.04em}.consume-hero p{margin:8px 0 0;color:#7a6a5c}.consume-card{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:18px}.consume-card form{display:grid;grid-template-columns:1fr 1fr 160px auto;gap:10px}.consume-card select,.consume-card input{min-height:40px;border:1px solid #e5d8ca;border-radius:12px;padding:0 10px}.consume-card button{min-height:42px;border-radius:12px}.consume-table{background:#fff;border:1px solid #eadfd2;border-radius:18px;overflow:hidden}.consume-table table{width:100%;border-collapse:collapse}.consume-table th,.consume-table td{padding:10px;border-bottom:1px solid #f0e7dc;text-align:left}.consume-table th{background:#fff8ef;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#5d4a38}@media(max-width:900px){.consume-card form{grid-template-columns:1fr}}
+.consume-page{display:grid;gap:18px}.consume-hero{background:linear-gradient(135deg,#fff8ef,#fff);border:1px solid #eadfd2;border-radius:22px;padding:22px;box-shadow:0 14px 36px rgba(45,32,20,.06)}.consume-hero h1{margin:0;font-size:34px;letter-spacing:-.05em}.consume-hero p{margin:8px 0 0;color:#7a6a5c;line-height:1.45}.consume-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.consume-kpi{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px}.consume-kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.consume-kpi strong{display:block;font-size:30px;margin-top:5px}.consume-card{background:#fff;border:1px solid #eadfd2;border-radius:20px;padding:18px}.consume-card form{display:grid;grid-template-columns:1fr 1fr 160px auto;gap:10px}.consume-card select,.consume-card input{min-height:42px;border:1px solid #e5d8ca;border-radius:13px;padding:0 10px;background:#fff}.consume-card button{min-height:44px;border-radius:13px;font-weight:900}.consume-table{background:#fff;border:1px solid #eadfd2;border-radius:20px;overflow:auto}.consume-table h2{margin:0;padding:16px;border-bottom:1px solid #eadfd2}.consume-table table{width:100%;border-collapse:collapse}.consume-table th,.consume-table td{padding:10px;border-bottom:1px solid #f0e7dc;text-align:left;font-size:13px}.consume-table th{background:#fff8ef;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#5d4a38}.consume-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.consume-links a{padding:9px 12px;border:1px solid #eadfd2;border-radius:999px;text-decoration:none;color:#6e563a;font-weight:900;background:#fff}.consume-note{background:#fffaf5;border:1px solid #eadfd2;border-radius:18px;padding:16px;color:#6e563a;line-height:1.45}@media(max-width:1000px){.consume-kpis{grid-template-columns:1fr 1fr}.consume-card form{grid-template-columns:1fr}}@media(max-width:620px){.consume-kpis{grid-template-columns:1fr}}
 </style>
 <section class="consume-page">
   <div class="consume-hero">
     <p class="eyebrow">Stocks</p>
     <h1>Consommation par prestation</h1>
-    <p>Parametrez les quantites consommees par soin pour expliquer le cout matiere et preparer la deduction automatique du stock.</p>
+    <p>Parametrez les quantites consommees par soin pour suivre le cout matiere, fiabiliser les achats et preparer la deduction automatique du stock apres chaque rendez-vous.</p>
+    <div class="consume-links"><a href="{{ url_for('stocks.index') }}">Retour cockpit stock</a></div>
   </div>
+
+  <div class="consume-kpis">
+    <article class="consume-kpi"><span>Regles configurees</span><strong>{{ items|length }}</strong></article>
+    <article class="consume-kpi"><span>Prestations couvertes</span><strong>{{ configured_treatment_ids|length }}</strong></article>
+    <article class="consume-kpi"><span>Produits utilises</span><strong>{{ configured_product_ids|length }}</strong></article>
+    <article class="consume-kpi"><span>Prestations actives</span><strong>{{ treatments|length }}</strong></article>
+  </div>
+
+  <section class="consume-note">
+    Une prestation peut consommer plusieurs produits : huile, serviette, consommable, creme ou autre. Cette logique permet ensuite d'estimer les couts et d'anticiper les reassorts.
+  </section>
 
   <section class="consume-card">
     <h2>Ajouter une consommation</h2>
@@ -21,6 +33,7 @@
   </section>
 
   <section class="consume-table">
+    <h2>Regles de consommation</h2>
     <table>
       <tr><th>Prestation</th><th>Produit</th><th>Quantite consommee</th></tr>
       {% for i in items %}
