@@ -10,46 +10,46 @@
   <div class="brand admin-brand">Rituels <span>d'Ailleurs</span></div>
   <small class="sidebar-kicker">Pilotage des instituts</small>
 
-  <div class="admin-menu-group"><span class="menu-title">Pilotage</span>
+  <details class="admin-menu-group" open><summary>Pilotage</summary>
     <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
     <a href="{{ url_for('appointments.index') }}">Rendez-vous</a>
     <a href="{{ url_for('planning.index') }}">Planning</a>
-  </div>
+  </details>
 
-  <div class="admin-menu-group"><span class="menu-title">Offre et reservation</span>
+  <details class="admin-menu-group" open><summary>Offre et reservation</summary>
     <a href="{{ url_for('booking.choose_treatment') }}">Reservation client</a>
     <a href="{{ url_for('admin.treatments') }}">Prestations</a>
     <a href="{{ url_for('admin.cabins') }}">Cabines</a>
     <a href="{{ url_for('ilu.matrix') }}">ILU</a>
-  </div>
+  </details>
 
-  <div class="admin-menu-group"><span class="menu-title">Clients et ventes</span>
+  <details class="admin-menu-group" open><summary>Clients et ventes</summary>
     <a href="{{ url_for('customers.index') }}">Clients</a>
     <a href="{{ url_for('giftcards.index') }}">Cartes cadeaux</a>
-  </div>
+  </details>
 
-  <div class="admin-menu-group"><span class="menu-title">Exploitation</span>
+  <details class="admin-menu-group"><summary>Exploitation</summary>
     <a href="{{ url_for('stocks.index') }}">Stocks</a>
     <a href="{{ url_for('suppliers.index') }}">Fournisseurs</a>
     <a href="{{ url_for('routines.index') }}">Routines</a>
-  </div>
+  </details>
 
-  <div class="admin-menu-group"><span class="menu-title">RH</span>
+  <details class="admin-menu-group"><summary>RH</summary>
     <a href="{{ url_for('hr.dashboard') }}">Vue RH</a>
     <a href="{{ url_for('hr.personnel') }}">Personnel</a>
     <a href="{{ url_for('hr.trainings') }}">Formations</a>
     <a href="{{ url_for('hr.habilitations') }}">Habilitations</a>
-  </div>
+  </details>
 
-  <div class="admin-menu-group"><span class="menu-title">QSE et documents</span>
+  <details class="admin-menu-group"><summary>QSE et documents</summary>
     <a href="{{ url_for('admin.documents') }}">Documents</a>
     <a href="{{ url_for('admin.qse') }}">QSE</a>
     <a href="{{ url_for('admin.audit') }}">Audit</a>
-  </div>
+  </details>
 
-  <div class="admin-menu-group"><span class="menu-title">Compte</span>
+  <details class="admin-menu-group"><summary>Compte</summary>
     <a href="{{ url_for('auth.logout') }}">Deconnexion</a>
-  </div>
+  </details>
 </aside>
 <section class="admin-main">{% block admin_content %}{% endblock %}</section>
 </body>
