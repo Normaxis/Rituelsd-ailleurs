@@ -11,7 +11,10 @@ logger = logging.getLogger('alembic.env')
 
 def get_engine():
     db = current_app.extensions['migrate'].db
-    return getattr(db, 'engine', db.get_engine())
+    try:
+        return db.engine
+    except AttributeError:
+        return db.get_engine()
 
 
 def get_engine_url():
