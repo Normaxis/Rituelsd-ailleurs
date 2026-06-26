@@ -19,24 +19,33 @@ def sync_staff_directory():
     db.session.commit()
 
     staff_names = [
-        ('Stéphanie', 'LECOQ', 'general_admin'),
-        ('Émilie', '', 'agency_manager'),
-        ('Julie', '', 'agency_manager'),
-        ('Manon', 'Gilette', 'practitioner'),
-        ('Elise', 'SNL', 'practitioner'),
-        ('Léonie', 'Wbx', 'practitioner'),
+        ('stephanie.lecoq', 'Stéphanie', 'LECOQ', 'general_admin'),
+        ('emilie', 'Émilie', '', 'agency_manager'),
+        ('julie', 'Julie', '', 'agency_manager'),
+        ('manon.gilette', 'Manon', 'Gilette', 'practitioner'),
+        ('elise.snl', 'Elise', 'SNL', 'practitioner'),
+        ('leonie.wbx', 'Léonie', 'Wbx', 'practitioner'),
     ]
     users = User.query.filter_by(is_active=True).order_by(User.id).all()
+    institutes = Institute.query.order_by(Institute.id).all()
+    institute_id = institutes[0].id if institutes else None
     default_role = Role.query.filter_by(name='practitioner').first()
     for index, item in enumerate(staff_names):
-        first_name, last_name, role_name = item
+        username, first_name, last_name, role_name = item
         role = Role.query.filter_by(name=role_name).first() or default_role
-        if index < len(users):
+        user = User.query.filter_by(username=username).first()
+        if not user and index < len(users):
             user = users[index]
-            user.first_name = first_name
-            user.last_name = last_name
-            if role:
-                user.role_id = role.id
+        if not user:
+            user = User(username=username, first_name=first_name, last_name=last_name, password_hash='not-for-login', role_id=role.id, institute_id=institute_id, is_active=True)
+            db.session.add(user)
+        user.first_name = first_name
+        user.last_name = last_name
+        if role:
+            user.role_id = role.id
+        if not user.institute_id:
+            user.institute_id = institute_id
+        user.is_active = True
     db.session.commit()
 
 
