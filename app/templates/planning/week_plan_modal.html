@@ -1,51 +1,71 @@
 <div class="week-plan-backdrop" id="weekPlanBackdrop"></div>
 <aside class="week-plan-modal" id="weekPlanModal" aria-hidden="true">
+  <style>
+    .week-plan-modal{width:min(1280px,96vw)!important}.week-toolbar{display:flex!important;gap:10px!important;align-items:end!important;padding:16px 20px!important;border-bottom:1px solid #eee4d8!important;background:#fffaf4!important}.week-toolbar label{font-size:11px!important;font-weight:900!important;color:#4a382b!important}.week-toolbar input{border:1px solid #e5d8ca!important;border-radius:10px!important;padding:9px!important;min-height:36px!important;background:#fff!important}.week-secondary{height:38px!important;border:1px solid #e5d8ca!important;border-radius:10px!important;background:#fff!important;color:#3b3028!important;font-weight:900!important;padding:0 14px!important}.week-planning-table{padding:16px 20px 24px!important}.week-planning-table h3{margin:10px 0 8px!important}.week-grid-table{display:grid!important;grid-template-columns:170px repeat(7,minmax(128px,1fr))!important;border:1px solid #eadfd2!important;border-radius:14px!important;overflow:auto!important;background:#fff!important}.week-cell,.week-head-cell,.week-name-cell{border-right:1px solid #f0e4d8!important;border-bottom:1px solid #f0e4d8!important;padding:9px!important;min-width:128px!important}.week-head-cell{background:#fbf4eb!important;font-size:11px!important;font-weight:900!important;color:#6d5947!important;text-transform:uppercase!important}.week-name-cell{min-width:170px!important;background:#fffaf4!important;font-weight:900!important;color:#2f251d!important;position:sticky!important;left:0!important;z-index:2!important}.week-cell{display:grid!important;gap:6px!important}.week-cell label{font-size:10px!important;font-weight:900!important;color:#5c4b3e!important}.week-cell input,.week-cell select{width:100%!important;border:1px solid #e5d8ca!important;border-radius:8px!important;padding:6px!important;font-size:11px!important;background:#fff!important}.week-active{display:flex!important;align-items:center!important;gap:5px!important;font-size:11px!important;font-weight:900!important}.week-source{display:inline-flex!important;width:max-content!important;border-radius:999px!important;padding:3px 7px!important;font-size:10px!important;font-weight:900!important;background:#efe5d9!important;color:#6c5847!important}.week-source.real{background:#dff1e6!important;color:#24543a!important}.week-source.empty{background:#f2eeee!important;color:#8a7d73!important}.week-savebar{display:flex!important;justify-content:space-between!important;gap:12px!important;align-items:center!important;margin-top:14px!important;background:#fff8ef!important;border:1px solid #efe1d1!important;border-radius:14px!important;padding:12px!important}.week-primary{height:40px!important;border:0!important;border-radius:10px!important;background:#b88a3d!important;color:#fff!important;font-weight:900!important;padding:0 18px!important}.week-note{font-size:12px!important;color:#7d7065!important}.week-section-separator{height:1px!important;background:#eee4d8!important;margin:18px 0!important}@media(max-width:900px){.week-toolbar,.week-savebar{display:grid!important}.week-grid-table{grid-template-columns:150px repeat(7,126px)!important}}
+  </style>
   <div class="week-plan-head">
     <div><p class="eyebrow">Planification hebdomadaire</p><h2>Planifier la semaine</h2><span>{{ week_days[0].date.strftime('%d/%m/%Y') }} - {{ week_days[6].date.strftime('%d/%m/%Y') }}</span></div>
     <button type="button" class="week-plan-close" id="weekPlanClose">×</button>
   </div>
 
-  <form method="post" action="{{ url_for('planning.weekly_plan') }}" class="week-plan-form">
+  <div class="week-toolbar">
+    <div><label for="weekJumpDate">Semaine a afficher</label><input type="date" id="weekJumpDate" value="{{ week_start.isoformat() }}"></div>
+    <button type="button" class="week-secondary" onclick="window.location='{{ url_for('planning.index', view=selected_view) }}&date='+document.getElementById('weekJumpDate').value">Ouvrir cette semaine</button>
+    <span class="week-note">Les cases sont pre-remplies avec les horaires de base de Personnel. Tu ajustes uniquement les exceptions de la semaine.</span>
+  </div>
+
+  <form method="post" action="{{ url_for('planning.weekly_plan') }}" class="week-planning-table">
     <input type="hidden" name="view" value="{{ selected_view }}">
-    <input type="hidden" name="action" value="generate_base">
-    <label>Semaine a planifier</label>
-    <input type="date" name="week_start" value="{{ week_start.isoformat() }}" required>
-    <div class="week-checks">
-      <label><input type="checkbox" name="apply_staff" value="1" checked> Generer les horaires des praticiennes</label>
-      <label><input type="checkbox" name="apply_cabins" value="1" checked> Generer les disponibilites cabines</label>
-      <label><input type="checkbox" name="replace_staff" value="1"> Remplacer les horaires salaries de la semaine</label>
-      <label><input type="checkbox" name="replace_cabins" value="1"> Remplacer les dispos cabines de la semaine</label>
+    <input type="hidden" name="action" value="save_week_table">
+    <input type="hidden" name="week_start" value="{{ week_start.isoformat() }}">
+
+    <h3>Praticiennes</h3>
+    <div class="week-grid-table">
+      <div class="week-head-cell">Praticienne</div>{% for d in week_days %}<div class="week-head-cell">{{ d.label }}<br>{{ d.date.strftime('%d/%m') }}</div>{% endfor %}
+      {% for u in users %}
+        <input type="hidden" name="staff_user_id" value="{{ u.id }}">
+        <div class="week-name-cell">{{ u.full_name }}</div>
+        {% for d in week_days %}
+          {% set idx = loop.index0 %}{% set real = staff_week_slots.get(u.id, {}).get(idx) %}{% set base = staff_base_slots.get(u.id, {}).get(idx) %}{% set item = real or base %}
+          <div class="week-cell">
+            <span class="week-source {{ 'real' if real else 'empty' if not item else '' }}">{{ 'Semaine' if real else 'Base' if base else 'Fermé' }}</span>
+            <label class="week-active"><input type="checkbox" name="staff_active_{{ u.id }}_{{ idx }}" value="1" {{ 'checked' if item }}> Actif</label>
+            <input type="time" name="staff_start_{{ u.id }}_{{ idx }}" value="{{ item.start_time.strftime('%H:%M') if item else '09:00' }}">
+            <input type="time" name="staff_end_{{ u.id }}_{{ idx }}" value="{{ item.end_time.strftime('%H:%M') if item else '17:00' }}">
+            <select name="staff_status_{{ u.id }}_{{ idx }}"><option value="present" {{ 'selected' if item and item.status=='present' }}>Disponible</option><option value="off" {{ 'selected' if item and item.status=='off' }}>Repos</option><option value="holiday" {{ 'selected' if item and item.status=='holiday' }}>Congé</option><option value="training" {{ 'selected' if item and item.status=='training' }}>Formation</option></select>
+            <input name="staff_note_{{ u.id }}_{{ idx }}" placeholder="Note" value="{{ item.note if item else '' }}">
+          </div>
+        {% endfor %}
+      {% endfor %}
     </div>
-    <button type="submit" class="week-primary">Generer depuis les horaires de base</button>
+
+    <div class="week-section-separator"></div>
+    <h3>Cabines</h3>
+    <div class="week-grid-table">
+      <div class="week-head-cell">Cabine</div>{% for d in week_days %}<div class="week-head-cell">{{ d.label }}<br>{{ d.date.strftime('%d/%m') }}</div>{% endfor %}
+      {% for c in cabins %}
+        <input type="hidden" name="cabin_id" value="{{ c.id }}">
+        <div class="week-name-cell">{{ c.name }}</div>
+        {% for d in week_days %}
+          {% set idx = loop.index0 %}{% set real = cabin_week_slots.get(c.id, {}).get(idx) %}{% set base = cabin_base_slots.get(c.id, {}).get(idx) %}{% set item = real or base %}
+          <div class="week-cell">
+            <span class="week-source {{ 'real' if real else 'empty' if not item else '' }}">{{ 'Semaine' if real else 'Base' if base else 'Fermée' }}</span>
+            <label class="week-active"><input type="checkbox" name="cabin_active_{{ c.id }}_{{ idx }}" value="1" {{ 'checked' if item }}> Ouverte</label>
+            <input type="time" name="cabin_start_{{ c.id }}_{{ idx }}" value="{{ item.start_time.strftime('%H:%M') if item else '09:00' }}">
+            <input type="time" name="cabin_end_{{ c.id }}_{{ idx }}" value="{{ item.end_time.strftime('%H:%M') if item else '18:00' }}">
+            <select name="cabin_status_{{ c.id }}_{{ idx }}"><option value="available" {{ 'selected' if item and item.status=='available' }}>Disponible</option><option value="closed" {{ 'selected' if item and item.status=='closed' }}>Fermée</option><option value="maintenance" {{ 'selected' if item and item.status=='maintenance' }}>Maintenance</option></select>
+            <input name="cabin_note_{{ c.id }}_{{ idx }}" placeholder="Note" value="{{ item.note if item else '' }}">
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+
+    <div class="week-savebar"><span class="week-note">Enregistrer remplace uniquement la planification réelle de cette semaine. Les horaires de base dans Personnel restent inchangés.</span><button type="submit" class="week-primary">Enregistrer la planification de la semaine</button></div>
   </form>
-
-  <div class="week-plan-section">
-    <h3>Ajouter un creneau manuel</h3>
-    <form method="post" action="{{ url_for('planning.weekly_plan') }}" class="week-plan-form">
-      <input type="hidden" name="view" value="{{ selected_view }}">
-      <input type="hidden" name="action" value="manual_slot">
-      <input type="hidden" name="week_start" value="{{ week_start.isoformat() }}">
-      <label>Type</label>
-      <select name="resource_type" id="weekResourceType"><option value="user">Praticienne</option><option value="cabin">Cabine</option></select>
-      <label>Praticienne</label>
-      <select name="user_id">{% for u in users %}<option value="{{ u.id }}">{{ u.full_name }}</option>{% endfor %}</select>
-      <label>Cabine</label>
-      <select name="cabin_id">{% for c in cabins %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
-      <label>Jour</label>
-      <select name="work_date">{% for d in week_days %}<option value="{{ d.date.isoformat() }}">{{ d.label }} {{ d.date.strftime('%d/%m') }}</option>{% endfor %}</select>
-      <div class="week-grid-2"><div><label>Debut</label><input type="time" name="start_time" value="09:00" required></div><div><label>Fin</label><input type="time" name="end_time" value="17:00" required></div></div>
-      <label>Statut praticienne</label><select name="user_status"><option value="present">Disponible</option><option value="off">Repos</option><option value="holiday">Conge</option><option value="training">Formation</option></select>
-      <label>Statut cabine</label><select name="cabin_status"><option value="available">Disponible</option><option value="closed">Fermee</option><option value="maintenance">Maintenance</option></select>
-      <label>Note</label><input name="note" placeholder="Ex : ouverture exceptionnelle, remplacement...">
-      <button type="submit" class="week-primary">Ajouter a la semaine</button>
-    </form>
-  </div>
-
-  <div class="week-plan-section">
-    <h3>Modeles disponibles</h3>
-    <div class="week-model-list">
-      {% for s in user_base_schedules %}<span>{{ s.user.full_name }} · {{ weekdays[s.weekday] }} · {{ s.start_time.strftime('%H:%M') }}-{{ s.end_time.strftime('%H:%M') }}</span>{% endfor %}
-      {% for s in cabin_base_schedules %}<span>{{ s.cabin.name }} · {{ weekdays[s.weekday] }} · {{ s.start_time.strftime('%H:%M') }}-{{ s.end_time.strftime('%H:%M') }}</span>{% endfor %}
-    </div>
-  </div>
 </aside>
+<script>
+(function(){
+  var input=document.getElementById('weekJumpDate');
+  if(input){input.addEventListener('change',function(){this.value=this.value;});}
+})();
+</script>
