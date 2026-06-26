@@ -22,6 +22,20 @@ function closeDrawer(){
   if(backdrop)backdrop.classList.remove('open');
 }
 
+function openWeekPlan(){
+  const modal=document.getElementById('weekPlanModal');
+  const backdrop=document.getElementById('weekPlanBackdrop');
+  if(modal){modal.classList.add('open');modal.setAttribute('aria-hidden','false');}
+  if(backdrop)backdrop.classList.add('open');
+}
+
+function closeWeekPlan(){
+  const modal=document.getElementById('weekPlanModal');
+  const backdrop=document.getElementById('weekPlanBackdrop');
+  if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
+  if(backdrop)backdrop.classList.remove('open');
+}
+
 function markAvailableSlots(){
   document.querySelectorAll('.premium-track').forEach(function(track){
     const presentBlocks=Array.from(track.querySelectorAll('.appointment-card-premium.block-present'));
@@ -91,14 +105,23 @@ document.addEventListener('DOMContentLoaded',function(){
   const drawerClose=document.getElementById('drawerClose');
   const drawerBackdrop=document.getElementById('drawerBackdrop');
   const railOpen=document.getElementById('drawerOpenRail');
+  const weekPlanOpen=document.getElementById('weekPlanOpen');
+  const weekPlanClose=document.getElementById('weekPlanClose');
+  const weekPlanBackdrop=document.getElementById('weekPlanBackdrop');
 
   document.querySelectorAll('.new-rdv-trigger').forEach(function(btn){btn.addEventListener('click',openDrawer);});
   if(railOpen)railOpen.addEventListener('click',openDrawer);
   if(drawerClose)drawerClose.addEventListener('click',closeDrawer);
   if(drawerBackdrop)drawerBackdrop.addEventListener('click',closeDrawer);
+  if(weekPlanOpen)weekPlanOpen.addEventListener('click',openWeekPlan);
+  if(weekPlanClose)weekPlanClose.addEventListener('click',closeWeekPlan);
+  if(weekPlanBackdrop)weekPlanBackdrop.addEventListener('click',closeWeekPlan);
 
   document.addEventListener('keydown',function(e){
-    if(e.key==='Escape')closeDrawer();
+    if(e.key==='Escape'){
+      closeDrawer();
+      closeWeekPlan();
+    }
   });
 
   document.addEventListener('dragstart',function(e){
