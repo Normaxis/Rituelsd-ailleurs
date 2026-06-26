@@ -1,12 +1,13 @@
 from datetime import date, datetime, timedelta
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, Response, render_template, request, redirect, url_for, flash
 from app.extensions import db
-from app.models import Cabin, HabilitationRecord, Institute, Role, TrainingRecord, User, WorkSlot, WeeklyCabinSchedule, WeeklyUserSchedule
+from app.models import Cabin, HabilitationRecord, Institute, Role, TrainingRecord, User, UserPhoto, WorkSlot, WeeklyCabinSchedule, WeeklyUserSchedule
 from app.utils.auth import login_required
 
 hr_bp = Blueprint('hr', __name__)
 
 WEEKDAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+ALLOWED_PHOTO_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
 
 
 def parse_date(value):
@@ -23,6 +24,10 @@ def user_week_schedule_map():
     for item in schedules:
         mapped.setdefault(item.user_id, {})[item.weekday] = item
     return mapped
+
+
+def user_photo_ids():
+    return {photo.user_id: photo.id for photo in UserPhoto.query.all()}
 
 
 @hr_bp.route('/')
@@ -47,8 +52,43 @@ def personnel():
         db.session.commit()
         flash('Salarie ajoute.', 'success')
         return redirect(url_for('hr.personnel'))
-    users = User.query.order_by(User.first_name, User.last_name).all()
-    return render_template('hr/personnel.html', users=users, roles=Role.query.all(), institutes=Institute.query.all(), cabins=Cabin.query.order_by(Cabin.name).all(), user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), user_week_schedules=user_week_schedule_map(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), weekdays=WEEKDAYS)
+    users = User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()
+    return render_template('hr/personnel.html', users=users, roles=Role.query.all(), institutes=Institute.query.all(), cabins=Cabin.query.order_by(Cabin.name).all(), user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), user_week_schedules=user_week_schedule_map(), user_photo_ids=user_photo_ids(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), weekdays=WEEKDAYS)
+
+
+@hr_bp.route('/personnel/photo/<int:user_id>')
+@login_required
+def personnel_photo(user_id):
+    photo = UserPhoto.query.filter_by(user_id=user_id).first_or_404()
+    return Response(photo.image_data, mimetype=photo.mime_type)
+
+
+@hr_bp.route('/personnel/photo', methods=['POST'])
+@login_required
+def save_personnel_photo():
+    user_id = int(request.form['user_id'])
+    uploaded = request.files.get('photo')
+    if not uploaded or not uploaded.filename:
+        flash('Aucune photo selectionnee.', 'error')
+        return redirect(url_for('hr.personnel', user_id=user_id))
+    if uploaded.mimetype not in ALLOWED_PHOTO_TYPES:
+        flash('Format photo accepte : JPG, PNG ou WEBP.', 'error')
+        return redirect(url_for('hr.personnel', user_id=user_id))
+    data = uploaded.read()
+    if len(data) > 2 * 1024 * 1024:
+        flash('Photo trop lourde : maximum 2 Mo.', 'error')
+        return redirect(url_for('hr.personnel', user_id=user_id))
+    photo = UserPhoto.query.filter_by(user_id=user_id).first()
+    if not photo:
+        photo = UserPhoto(user_id=user_id, filename=uploaded.filename, mime_type=uploaded.mimetype, image_data=data)
+        db.session.add(photo)
+    else:
+        photo.filename = uploaded.filename
+        photo.mime_type = uploaded.mimetype
+        photo.image_data = data
+    db.session.commit()
+    flash('Photo mise a jour.', 'success')
+    return redirect(url_for('hr.personnel', user_id=user_id))
 
 
 @hr_bp.route('/personnel/horaires-semaine', methods=['POST'])
@@ -64,12 +104,12 @@ def save_user_week_schedule():
         if not start_time or not end_time or end_time <= start_time:
             flash(f'Horaire invalide pour {WEEKDAYS[weekday]}.', 'error')
             db.session.rollback()
-            return redirect(url_for('hr.personnel'))
+            return redirect(url_for('hr.personnel', user_id=user_id))
         item = WeeklyUserSchedule(user_id=user_id, weekday=weekday, start_time=start_time, end_time=end_time, status=request.form.get(f'status_{weekday}', 'present'), note=request.form.get(f'note_{weekday}', ''))
         db.session.add(item)
     db.session.commit()
     flash('Horaires de base de la semaine enregistres.', 'success')
-    return redirect(url_for('hr.personnel'))
+    return redirect(url_for('hr.personnel', user_id=user_id))
 
 
 @hr_bp.route('/personnel/horaires-base', methods=['POST'])
