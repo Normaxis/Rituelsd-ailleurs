@@ -4,6 +4,23 @@ function isMobilePlanner(){
   return window.matchMedia('(max-width:1200px)').matches;
 }
 
+function applyFrenchDateLabels(){
+  const board=document.querySelector('.planning-premium');
+  if(!board||!board.dataset.date)return;
+  const days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const d=new Date(board.dataset.date+'T00:00:00');
+  if(Number.isNaN(d.getTime()))return;
+  const label=days[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+' '+months[d.getMonth()]+' '+d.getFullYear();
+  const monthLabel=months[d.getMonth()].charAt(0).toUpperCase()+months[d.getMonth()].slice(1)+' '+d.getFullYear();
+  const chip=document.querySelector('.date-chip');
+  const sideTitle=document.querySelector('.secondary-date-title b');
+  const monthTitle=document.querySelector('.secondary-month-head strong');
+  if(chip)chip.innerHTML='<span>▣</span>'+label;
+  if(sideTitle)sideTitle.textContent=label;
+  if(monthTitle)monthTitle.textContent=monthLabel;
+}
+
 function openDrawer(){
   const board=document.querySelector('.planning-premium');
   const drawer=document.getElementById('appointmentDrawer');
@@ -94,8 +111,9 @@ function slotIsInAvailability(cell){
 document.addEventListener('DOMContentLoaded',function(){
   const board=document.querySelector('.planning-premium');
   if(!board)return;
+  applyFrenchDateLabels();
   refreshAvailability();
-  window.addEventListener('load',refreshAvailability);
+  window.addEventListener('load',function(){applyFrenchDateLabels();refreshAvailability();});
   window.addEventListener('resize',refreshAvailability);
   const createDate=document.getElementById('createDate');
   const createTime=document.getElementById('createTime');
@@ -143,7 +161,7 @@ document.addEventListener('DOMContentLoaded',function(){
       const resourceId=cell.dataset.resourceId;
       const slotTime=cell.dataset.time;
       if(!slotIsInAvailability(cell)){
-        alert('Cette praticienne n est pas disponible sur ce creneau. Cliquez dans une zone verte.');
+        alert('Cette praticienne n’est pas disponible sur ce créneau. Cliquez dans une zone verte.');
         return;
       }
       if(createDate)createDate.value=board.dataset.date;
@@ -163,14 +181,14 @@ document.addEventListener('DOMContentLoaded',function(){
       e.preventDefault();cell.classList.remove('drop-hover');
       if(!dragged)return;
       if(!slotIsInAvailability(cell)){
-        alert('Impossible : la praticienne n est pas disponible sur ce creneau.');
+        alert('Impossible : la praticienne n’est pas disponible sur ce créneau.');
         return;
       }
       const payload={event_type:dragged.event_type,event_id:dragged.event_id,resource_type:cell.dataset.resourceType,resource_id:cell.dataset.resourceId,time:cell.dataset.time,date:board.dataset.date};
       fetch('/admin/planning/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
         .then(function(r){return r.json().then(function(j){return {ok:r.ok,body:j};});})
-        .then(function(res){if(res.ok&&res.body.ok){window.location.reload();}else{alert(res.body.message||'Deplacement impossible');}})
-        .catch(function(){alert('Erreur reseau');});
+        .then(function(res){if(res.ok&&res.body.ok){window.location.reload();}else{alert(res.body.message||'Déplacement impossible');}})
+        .catch(function(){alert('Erreur réseau');});
     });
   });
 });
