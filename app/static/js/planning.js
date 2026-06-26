@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded',function(){
   const board=document.querySelector('.planning-premium');
   if(!board)return;
   const csrfToken=board.dataset.csrfToken||'';
+  const canManage=board.dataset.canManage==='1';
   applyFrenchDateLabels();
   refreshAvailability();
   window.addEventListener('load',function(){applyFrenchDateLabels();refreshAvailability();});
@@ -144,6 +145,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 
   document.addEventListener('dragstart',function(e){
+    if(!canManage)return;
     const item=e.target.closest('[data-event-id]');
     if(!item)return;
     if(item.classList.contains('block-present'))return;
@@ -159,6 +161,7 @@ document.addEventListener('DOMContentLoaded',function(){
 
   document.querySelectorAll('.slot-drop').forEach(function(cell){
     cell.addEventListener('click',function(){
+      if(!canManage)return;
       const resourceType=cell.dataset.resourceType;
       const resourceId=cell.dataset.resourceId;
       const slotTime=cell.dataset.time;
@@ -175,11 +178,13 @@ document.addEventListener('DOMContentLoaded',function(){
     });
 
     cell.addEventListener('dragover',function(e){
+      if(!canManage)return;
       e.preventDefault();
       if(slotIsInAvailability(cell))cell.classList.add('drop-hover');
     });
     cell.addEventListener('dragleave',function(){cell.classList.remove('drop-hover');});
     cell.addEventListener('drop',function(e){
+      if(!canManage)return;
       e.preventDefault();cell.classList.remove('drop-hover');
       if(!dragged)return;
       if(!slotIsInAvailability(cell)){
