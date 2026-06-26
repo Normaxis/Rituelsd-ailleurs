@@ -5,7 +5,7 @@
   <title>Administration - Rituels d'Ailleurs</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
-<body class="admin-body {% if request.endpoint and request.endpoint.startswith('planning.') %}planning-shell-body{% endif %}">
+<body class="admin-body {% if request.endpoint and (request.endpoint.startswith('planning.') or request.endpoint.startswith('week_planning.')) %}planning-shell-body{% endif %}">
 <aside class="sidebar">
   <div class="brand admin-brand">Rituels <span>d'Ailleurs</span></div>
   <small class="sidebar-kicker">Pilotage des instituts</small>
@@ -13,7 +13,8 @@
   <details class="admin-menu-group" open><summary>Pilotage</summary>
     <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
     <a href="{{ url_for('appointments.index') }}">Rendez-vous</a>
-    <a href="{{ url_for('planning.index') }}">Planning</a>
+    <a href="{{ url_for('planning.index') }}">Planning jour</a>
+    <a href="{{ url_for('week_planning.index') }}">Planning semaine</a>
   </details>
 
   <details class="admin-menu-group" open><summary>Offre et reservation</summary>
@@ -53,6 +54,6 @@
     <a href="{{ url_for('auth.logout') }}">Deconnexion</a>
   </details>
 </aside>
-<section class="admin-main {% if request.endpoint and request.endpoint.startswith('planning.') %}planning-main{% endif %}">{% block admin_content %}{% endblock %}</section>
+<section class="admin-main {% if request.endpoint and (request.endpoint.startswith('planning.') or request.endpoint.startswith('week_planning.')) %}planning-main{% endif %}">{% block admin_content %}{% endblock %}</section>
 </body>
 </html>
