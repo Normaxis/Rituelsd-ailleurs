@@ -11,6 +11,7 @@ from app.models import (
     CabinAvailabilitySlot,
     SkillILU,
     Treatment,
+    TreatmentCabinCompatibility,
     User,
     WeeklyCabinSchedule,
     WeeklyUserSchedule,
@@ -157,13 +158,15 @@ def _cabin_is_available(cabin_id, start_at, end_at):
     return False, 'La durée du rendez-vous dépasse la disponibilité de la cabine.'
 
 
-def _free_cabin(institute_id, start_at, end_at, exclude_id=None):
+def _free_cabin(institute_id, start_at, end_at, exclude_id=None, treatment=None):
     query = Cabin.query.filter_by(is_active=True)
     if institute_id:
         query = query.filter_by(institute_id=institute_id)
     cabins = query.order_by(Cabin.name).all()
     for cabin in cabins:
         if not _entity_in_scope(cabin):
+            continue
+        if treatment and _cabin_compatibility_error(treatment, cabin):
             continue
         cabin_available, _ = _cabin_is_available(cabin.id, start_at, end_at)
         busy = _busy_appointment(Appointment.query.filter_by(cabin_id=cabin.id), start_at, end_at, exclude_id)
@@ -372,6 +375,16 @@ def _ilu_error(user, treatment):
     return None
 
 
+def _cabin_compatibility_error(treatment, cabin):
+    rules = TreatmentCabinCompatibility.query.filter_by(treatment_id=treatment.id).all()
+    if not rules:
+        return None
+    matching_rule = next((rule for rule in rules if rule.cabin_id == cabin.id), None)
+    if not matching_rule or not matching_rule.is_allowed:
+        return 'Cette cabine n’est pas compatible avec la prestation sélectionnée.'
+    return None
+
+
 def _appointment_validation_error(treatment, user, cabin, start_at, end_at, exclude_id=None):
     if not treatment.is_active:
         return 'Cette prestation est inactive.'
@@ -387,6 +400,9 @@ def _appointment_validation_error(treatment, user, cabin, start_at, end_at, excl
         return 'La prestation ne correspond pas à l’établissement de la praticienne.'
     if treatment.institute_id and cabin.institute_id and treatment.institute_id != cabin.institute_id:
         return 'La prestation ne correspond pas à l’établissement de la cabine.'
+    cabin_compatibility_message = _cabin_compatibility_error(treatment, cabin)
+    if cabin_compatibility_message:
+        return cabin_compatibility_message
     ilu_message = _ilu_error(user, treatment)
     if ilu_message:
         return ilu_message
@@ -689,6 +705,7 @@ def create_appointment():
         start_at=start_at,
         end_at=end_at,
         status='confirmed',
+        note=request.form.get('note', '').strip(),
     )
     db.session.add(appointment)
     db.session.commit()
@@ -725,7 +742,7 @@ def move_event():
             cabin = appointment.cabin
             message = _appointment_validation_error(treatment, user, cabin, target_start, target_end, appointment.id)
             if message:
-                cabin = _free_cabin(user.institute_id, target_start, target_end, appointment.id)
+                cabin = _free_cabin(user.institute_id, target_start, target_end, appointment.id, treatment)
                 if not cabin:
                     return jsonify({'ok': False, 'message': message or 'Aucune cabine libre'}), 409
                 message = _appointment_validation_error(treatment, user, cabin, target_start, target_end, appointment.id)
