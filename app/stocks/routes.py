@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import db
 from app.models import Product, StockMovement, Treatment, TreatmentConsumption
 from app.utils.auth import login_required
@@ -126,8 +126,17 @@ def movement():
 @login_required
 def consumptions():
     if request.method == 'POST':
-        item = TreatmentConsumption(treatment_id=int(request.form['treatment_id']), product_id=int(request.form['product_id']), quantity=float(request.form.get('quantity') or 0))
-        db.session.add(item)
+        treatment_id = int(request.form['treatment_id'])
+        product_id = int(request.form['product_id'])
+        quantity = float(request.form.get('quantity') or 0)
+        item = TreatmentConsumption.query.filter_by(treatment_id=treatment_id, product_id=product_id).first()
+        if item:
+            item.quantity = quantity
+            flash('Consommation existante mise a jour.', 'success')
+        else:
+            item = TreatmentConsumption(treatment_id=treatment_id, product_id=product_id, quantity=quantity)
+            db.session.add(item)
+            flash('Consommation ajoutee.', 'success')
         db.session.commit()
         return redirect(url_for('stocks.consumptions'))
     items = TreatmentConsumption.query.all()
