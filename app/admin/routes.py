@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for
 from app.extensions import db
-from app.models import Treatment, Cabin, User, AuditLog, Institute, Customer, GiftCard, Supplier, DocumentRecord, QSEAction, Product
+from app.models import Treatment, Cabin, User, AuditLog, Institute, DocumentRecord, QSEAction, Product, Customer, GiftCard, Supplier
 from app.utils.auth import login_required, current_user
 
 admin_bp = Blueprint('admin', __name__)
@@ -46,6 +46,12 @@ def documents():
         db.session.add(doc); db.session.commit()
         return redirect(url_for('admin.documents'))
     return render_template('documents/index.html', docs=DocumentRecord.query.order_by(DocumentRecord.created_at.desc()).all())
+
+@admin_bp.route('/documents/<int:doc_id>')
+@login_required
+def document_detail(doc_id):
+    doc = DocumentRecord.query.get_or_404(doc_id)
+    return render_template('documents/detail.html', doc=doc)
 
 @admin_bp.route('/qse')
 @login_required
