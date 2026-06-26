@@ -2,6 +2,16 @@ from datetime import date
 from app.extensions import db
 
 
+class UserPhoto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    filename = db.Column(db.String(180), default='')
+    mime_type = db.Column(db.String(80), default='image/jpeg')
+    image_data = db.Column(db.LargeBinary, nullable=False)
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    user = db.relationship('User')
+
+
 class WeeklyUserSchedule(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
