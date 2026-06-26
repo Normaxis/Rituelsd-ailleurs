@@ -1,0 +1,74 @@
+/* Planning compact V2 - dezoom visuel */
+body.planning-shell-body{grid-template-columns:220px minmax(0,1fr)!important}
+body.planning-shell-body .sidebar{padding:14px 12px!important}
+body.planning-shell-body .admin-brand{font-size:18px!important;line-height:1.05!important;margin-bottom:6px!important}
+body.planning-shell-body .sidebar-kicker{font-size:9px!important;letter-spacing:.12em!important;margin-bottom:4px!important}
+body.planning-shell-body .admin-menu-group{margin-top:5px!important;padding-top:6px!important}
+body.planning-shell-body .admin-menu-group summary{font-size:8.5px!important;padding:2px 8px 5px!important}
+body.planning-shell-body .sidebar a{font-size:12px!important;padding:6px 8px!important;border-radius:9px!important}
+
+.planning-premium{--track-height:640px!important;font-size:12px!important}
+.planning-premium .planner-app-shell{grid-template-columns:220px minmax(0,1fr)!important}
+.planning-premium .planner-utility{height:calc(100vh - 54px)!important}
+.planner-control-bar{height:54px!important;padding:0 14px!important;gap:10px!important}
+.resource-switch,.period-switch{border-radius:9px!important;padding:2px!important}
+.resource-switch a,.period-switch span{height:30px!important;padding:0 10px!important;font-size:11px!important;border-radius:7px!important}
+.nav-square,.settings-square{width:32px!important;height:32px!important;font-size:15px!important;border-radius:8px!important}
+.date-chip{height:32px!important;min-width:185px!important;padding:0 12px!important;font-size:11px!important;border-radius:8px!important}
+.today-chip{height:32px!important;padding:0 12px!important;font-size:11px!important;border-radius:8px!important}
+
+.secondary-date-title{padding:12px 14px 7px!important}
+.secondary-date-title b{font-size:11px!important}
+.secondary-month-head{padding:8px 12px 6px!important}
+.secondary-month-head strong{font-size:12px!important}
+.secondary-month-head button{width:24px!important;height:24px!important;font-size:15px!important}
+.secondary-calendar{padding:0 12px 12px!important}
+.secondary-weekdays,.secondary-month-grid{gap:3px!important}
+.secondary-weekdays span{font-size:9.5px!important}
+.secondary-day{height:22px!important;font-size:11px!important}
+.secondary-filter-block{padding:10px 13px!important}
+.secondary-filter-head{margin-bottom:6px!important}
+.secondary-filter-head h3{font-size:11px!important}
+.secondary-filter-head a{font-size:10.5px!important}
+.filter-row{font-size:11px!important;padding:4px 0!important;gap:8px!important}
+.check-square{width:14px!important;height:14px!important;font-size:10px!important;border-radius:4px!important}
+.filter-dot{width:5px!important;height:5px!important}
+.secondary-footer{padding:10px 13px!important}
+.show-all-practitioners{font-size:11px!important;padding:8px 6px!important;border-radius:9px!important}
+
+.scheduler-frame{padding:0!important}
+.scheduler-scroll-area{border-radius:0!important}
+.calendar-board-premium{grid-template-columns:54px minmax(680px,1fr)!important;min-width:730px!important;gap:0!important;padding:0!important}
+.axis-head{height:58px!important;font-size:9px!important}
+.axis-track{height:var(--track-height)!important;border-radius:0!important}
+.axis-marker{font-size:10px!important;padding-left:6px!important}
+.premium-resource{grid-template-rows:58px var(--track-height)!important;gap:0!important}
+.premium-resource-head{height:58px!important;padding:6px 10px!important;gap:7px!important}
+.photo-avatar,.resource-avatar{width:32px!important;height:32px!important;font-size:12px!important;border-width:2px!important}
+.resource-text b{font-size:12px!important}
+.resource-text span{font-size:10px!important;margin-top:2px!important}
+.resource-board{grid-template-columns:repeat(var(--cols),minmax(190px,1fr))!important;gap:0!important}
+.premium-track{height:var(--track-height)!important;border-radius:0!important}
+.appointment-card-premium{left:6px!important;right:6px!important;border-radius:10px!important;padding:5px 7px 5px 9px!important;box-shadow:0 6px 14px rgba(0,0,0,.08)!important}
+.appointment-card-premium b{font-size:11px!important;line-height:1.1!important}
+.appointment-card-premium small{font-size:9.5px!important;line-height:1.15!important}
+.block-hour{font-size:9px!important}
+.grabber{right:6px!important;top:4px!important;font-size:10px!important}
+.scheduler-hint{font-size:10.5px!important;margin:0 10px 10px!important;padding:7px 10px!important}
+
+.appointment-drawer{width:min(360px,94vw)!important;padding:14px!important}
+.drawer-head{margin-bottom:12px!important}
+.drawer-head h2{font-size:21px!important}
+.drawer-form{gap:6px!important}
+.drawer-form label{font-size:11px!important;margin-top:3px!important}
+.drawer-form input,.drawer-form select{padding:8px!important;border-radius:10px!important;font-size:12px!important}
+.drawer-actions button{padding:9px 12px!important;font-size:12px!important}
+
+@media(max-width:1450px){
+  .resource-board{grid-template-columns:repeat(var(--cols),205px)!important}
+  .calendar-board-premium{grid-template-columns:52px minmax(680px,1fr)!important}
+}
+@media(max-width:900px){
+  body.planning-shell-body{grid-template-columns:1fr!important}
+  .planning-premium .planner-app-shell{grid-template-columns:1fr!important}
+}
