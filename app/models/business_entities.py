@@ -77,6 +77,31 @@ class SupplierOrderLine(db.Model):
         return (self.quantity or 0) * (self.unit_price or 0)
 
 
+class StockMovement(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    movement_type = db.Column(db.String(40), default='adjustment')
+    quantity = db.Column(db.Float, default=0)
+    unit_cost = db.Column(db.Float, default=0)
+    reason = db.Column(db.String(160), default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    product = db.relationship('Product')
+
+    @property
+    def total_cost(self):
+        return abs(self.quantity or 0) * (self.unit_cost or 0)
+
+
+class TreatmentConsumption(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    treatment_id = db.Column(db.Integer, db.ForeignKey('treatment.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    quantity = db.Column(db.Float, default=0)
+    treatment = db.relationship('Treatment')
+    product = db.relationship('Product')
+    __table_args__ = (db.UniqueConstraint('treatment_id', 'product_id', name='uniq_treatment_product_consumption'),)
+
+
 class DocumentRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(180), nullable=False)
