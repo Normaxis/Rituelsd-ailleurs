@@ -189,6 +189,38 @@ def _create_cabin_slot_from_base(base, target_date):
     return CabinAvailabilitySlot(cabin_id=base.cabin_id, work_date=target_date, start_time=base.start_time, end_time=base.end_time, status=base.status, note=base.note or 'Disponibilite de base')
 
 
+def _base_user_schedule_map():
+    mapped = {}
+    for slot in WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday).all():
+        mapped.setdefault(slot.user_id, {})[slot.weekday] = slot
+    return mapped
+
+
+def _base_cabin_schedule_map():
+    mapped = {}
+    for slot in WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday).all():
+        mapped.setdefault(slot.cabin_id, {})[slot.weekday] = slot
+    return mapped
+
+
+def _week_work_slot_map(week_start):
+    week_end = week_start + timedelta(days=7)
+    mapped = {}
+    slots = WorkSlot.query.filter(WorkSlot.work_date >= week_start, WorkSlot.work_date < week_end).order_by(WorkSlot.user_id, WorkSlot.work_date, WorkSlot.start_time).all()
+    for slot in slots:
+        mapped.setdefault(slot.user_id, {})[slot.work_date.weekday()] = slot
+    return mapped
+
+
+def _week_cabin_slot_map(week_start):
+    week_end = week_start + timedelta(days=7)
+    mapped = {}
+    slots = CabinAvailabilitySlot.query.filter(CabinAvailabilitySlot.work_date >= week_start, CabinAvailabilitySlot.work_date < week_end).order_by(CabinAvailabilitySlot.cabin_id, CabinAvailabilitySlot.work_date, CabinAvailabilitySlot.start_time).all()
+    for slot in slots:
+        mapped.setdefault(slot.cabin_id, {})[slot.work_date.weekday()] = slot
+    return mapped
+
+
 @planning_bp.route('/', methods=['GET','POST'])
 @login_required
 def index():
@@ -259,27 +291,57 @@ def index():
             blocks.sort(key=lambda item: item['top'])
             board_resources.append({'id': cabin.id, 'type': 'cabin', 'name': cabin.name, 'subtitle': cabin.cabin_type, 'blocks': blocks, 'slot_states': {slot['time']: True for slot in _time_slots()}})
 
-    return render_template('planning/pro.html', users=users, cabins=cabins, treatments=treatments, slots=slots, appointments=appointments, selected_date=selected_date, prev_day=selected_date - timedelta(days=1), next_day=selected_date + timedelta(days=1), week_start=selected_week_start, week_days=week_days, weekdays=WEEKDAYS, month_weeks=_month_matrix(selected_date), selected_view=selected_view, board_resources=board_resources, time_slots=_time_slots(), time_markers=_time_markers(), scheduler_start_hour=SCHEDULER_START_HOUR, scheduler_end_hour=SCHEDULER_END_HOUR, user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all())
+    return render_template('planning/pro.html', users=users, cabins=cabins, treatments=treatments, slots=slots, appointments=appointments, selected_date=selected_date, prev_day=selected_date - timedelta(days=1), next_day=selected_date + timedelta(days=1), week_start=selected_week_start, week_days=week_days, weekdays=WEEKDAYS, month_weeks=_month_matrix(selected_date), selected_view=selected_view, board_resources=board_resources, time_slots=_time_slots(), time_markers=_time_markers(), scheduler_start_hour=SCHEDULER_START_HOUR, scheduler_end_hour=SCHEDULER_END_HOUR, user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), staff_base_slots=_base_user_schedule_map(), cabin_base_slots=_base_cabin_schedule_map(), staff_week_slots=_week_work_slot_map(selected_week_start), cabin_week_slots=_week_cabin_slot_map(selected_week_start))
 
 
 @planning_bp.route('/weekly-plan', methods=['POST'])
 @login_required
 def weekly_plan():
     week_start = _parse_week_start(request.form.get('week_start'))
-    action = request.form.get('action', 'generate_base')
+    action = request.form.get('action', 'save_week_table')
     week_end = week_start + timedelta(days=7)
 
+    if action == 'save_week_table':
+        user_ids = [int(value) for value in request.form.getlist('staff_user_id')]
+        cabin_ids = [int(value) for value in request.form.getlist('cabin_id')]
+        if user_ids:
+            WorkSlot.query.filter(WorkSlot.user_id.in_(user_ids), WorkSlot.work_date >= week_start, WorkSlot.work_date < week_end).delete(synchronize_session=False)
+        if cabin_ids:
+            CabinAvailabilitySlot.query.filter(CabinAvailabilitySlot.cabin_id.in_(cabin_ids), CabinAvailabilitySlot.work_date >= week_start, CabinAvailabilitySlot.work_date < week_end).delete(synchronize_session=False)
+        try:
+            for user_id in user_ids:
+                for weekday in range(7):
+                    if not request.form.get(f'staff_active_{user_id}_{weekday}'):
+                        continue
+                    start_time = datetime.strptime(request.form[f'staff_start_{user_id}_{weekday}'], '%H:%M').time()
+                    end_time = datetime.strptime(request.form[f'staff_end_{user_id}_{weekday}'], '%H:%M').time()
+                    if end_time <= start_time:
+                        raise ValueError('Horaire praticienne invalide')
+                    db.session.add(WorkSlot(user_id=user_id, work_date=week_start + timedelta(days=weekday), start_time=start_time, end_time=end_time, status=request.form.get(f'staff_status_{user_id}_{weekday}', AVAILABLE_STATUS), note=request.form.get(f'staff_note_{user_id}_{weekday}', '')))
+            for cabin_id in cabin_ids:
+                for weekday in range(7):
+                    if not request.form.get(f'cabin_active_{cabin_id}_{weekday}'):
+                        continue
+                    start_time = datetime.strptime(request.form[f'cabin_start_{cabin_id}_{weekday}'], '%H:%M').time()
+                    end_time = datetime.strptime(request.form[f'cabin_end_{cabin_id}_{weekday}'], '%H:%M').time()
+                    if end_time <= start_time:
+                        raise ValueError('Horaire cabine invalide')
+                    db.session.add(CabinAvailabilitySlot(cabin_id=cabin_id, work_date=week_start + timedelta(days=weekday), start_time=start_time, end_time=end_time, status=request.form.get(f'cabin_status_{cabin_id}_{weekday}', CABIN_AVAILABLE_STATUS), note=request.form.get(f'cabin_note_{cabin_id}_{weekday}', '')))
+        except (KeyError, ValueError):
+            db.session.rollback()
+            flash('Un horaire de la semaine est invalide.', 'error')
+            return redirect(url_for('planning.index', date=week_start.isoformat(), view=request.form.get('view', 'user')))
+        db.session.commit()
+        flash('Planification de la semaine enregistree.', 'success')
+        return redirect(url_for('planning.index', date=week_start.isoformat(), view=request.form.get('view', 'user')))
+
     if action == 'generate_base':
-        if request.form.get('replace_staff'):
-            WorkSlot.query.filter(WorkSlot.work_date >= week_start, WorkSlot.work_date < week_end).delete(synchronize_session=False)
-        if request.form.get('replace_cabins'):
-            CabinAvailabilitySlot.query.filter(CabinAvailabilitySlot.work_date >= week_start, CabinAvailabilitySlot.work_date < week_end).delete(synchronize_session=False)
-        if request.form.get('apply_staff'):
-            for base in WeeklyUserSchedule.query.all():
-                db.session.add(_create_work_slot_from_base(base, week_start + timedelta(days=base.weekday)))
-        if request.form.get('apply_cabins'):
-            for base in WeeklyCabinSchedule.query.all():
-                db.session.add(_create_cabin_slot_from_base(base, week_start + timedelta(days=base.weekday)))
+        WorkSlot.query.filter(WorkSlot.work_date >= week_start, WorkSlot.work_date < week_end).delete(synchronize_session=False)
+        CabinAvailabilitySlot.query.filter(CabinAvailabilitySlot.work_date >= week_start, CabinAvailabilitySlot.work_date < week_end).delete(synchronize_session=False)
+        for base in WeeklyUserSchedule.query.all():
+            db.session.add(_create_work_slot_from_base(base, week_start + timedelta(days=base.weekday)))
+        for base in WeeklyCabinSchedule.query.all():
+            db.session.add(_create_cabin_slot_from_base(base, week_start + timedelta(days=base.weekday)))
         db.session.commit()
         flash('Semaine generee depuis les horaires de base.', 'success')
         return redirect(url_for('planning.index', date=week_start.isoformat(), view=request.form.get('view', 'user')))
