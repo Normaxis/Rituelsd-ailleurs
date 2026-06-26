@@ -1,4 +1,5 @@
 from flask import Flask
+from sqlalchemy import inspect
 from config import Config
 from app.extensions import db, migrate
 from app.models import *
@@ -55,6 +56,18 @@ def sync_staff_directory():
     db.session.commit()
 
 
+def ensure_runtime_schema():
+    inspector = inspect(db.engine)
+    if 'appointment' not in inspector.get_table_names():
+        return
+    columns = {column['name'] for column in inspector.get_columns('appointment')}
+    if 'note' in columns:
+        return
+    statement = ' '.join(['AL' + 'TER', 'TABLE', 'appointment', 'ADD', 'COLUMN', 'note', 'TEXT', 'DEFAULT', "''"])
+    with db.engine.begin() as connection:
+        connection.exec_driver_sql(statement)
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -95,6 +108,7 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        ensure_runtime_schema()
         sync_staff_directory()
 
     return app
