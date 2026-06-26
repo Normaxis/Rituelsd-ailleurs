@@ -1,19 +1,28 @@
 {% extends 'admin/base_admin.html' %}
 {% block admin_content %}
 <style>
-.stock-demo{display:grid;gap:18px}.stock-hero{background:linear-gradient(135deg,#fff8ef,#fff);border:1px solid #eadfd2;border-radius:20px;padding:22px;box-shadow:0 14px 36px rgba(45,32,20,.06)}.stock-hero h1{margin:0;font-size:34px;letter-spacing:-.05em}.stock-hero p{margin:8px 0 0;color:#7a6a5c;line-height:1.45}.stock-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.stock-kpi{background:#fff;border:1px solid #eadfd2;border-radius:16px;padding:16px}.stock-kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.stock-kpi strong{display:block;font-size:30px;margin-top:5px}.stock-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.stock-card{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:18px}.stock-card h2{margin:0 0 12px}.stock-card form{display:grid;gap:10px}.stock-card input,.stock-card select{min-height:40px;border:1px solid #e5d8ca;border-radius:12px;padding:0 10px}.stock-card button{min-height:42px;border-radius:12px}.stock-table{background:#fff;border:1px solid #eadfd2;border-radius:18px;overflow:hidden}.stock-table h2{margin:0;padding:16px;border-bottom:1px solid #eadfd2}.stock-table table{width:100%;border-collapse:collapse}.stock-table th,.stock-table td{padding:10px;border-bottom:1px solid #f0e7dc;text-align:left;font-size:13px}.stock-table th{background:#fff8ef;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#5d4a38}.badge-ok,.badge-alert{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900}.badge-ok{background:#e4f4eb;color:#23573a}.badge-alert{background:#fbe6e1;color:#81483f}@media(max-width:900px){.stock-kpis,.stock-grid{grid-template-columns:1fr}}
+.stock-cockpit{display:grid;gap:18px}.stock-hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,.7fr);gap:16px;align-items:stretch}.stock-panel{background:#fff;border:1px solid #eadfd2;border-radius:22px;padding:22px;box-shadow:0 14px 36px rgba(45,32,20,.06)}.stock-panel.gold{background:linear-gradient(135deg,#fff8ef,#fff)}.stock-panel h1{margin:0;font-size:36px;letter-spacing:-.05em}.stock-panel p{margin:8px 0 0;color:#7a6a5c;line-height:1.45}.stock-health{display:grid;gap:10px}.stock-health strong{font-size:34px}.stock-health span{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.stock-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.stock-kpi{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px}.stock-kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.stock-kpi strong{display:block;font-size:30px;margin-top:5px}.stock-kpi small{display:block;margin-top:5px;color:#7a6a5c}.stock-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.stock-card{background:#fff;border:1px solid #eadfd2;border-radius:20px;padding:18px}.stock-card h2{margin:0 0 12px}.stock-card form{display:grid;gap:10px}.stock-card input,.stock-card select{min-height:42px;border:1px solid #e5d8ca;border-radius:13px;padding:0 10px;background:#fff}.stock-card button{min-height:44px;border-radius:13px;font-weight:900}.priority-list{display:grid;gap:8px}.priority-item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px;border:1px solid #f0e7dc;border-radius:14px;background:#fffaf5}.priority-item b{display:block}.priority-item small{color:#7a6a5c}.stock-table{background:#fff;border:1px solid #eadfd2;border-radius:20px;overflow:auto}.stock-table h2{margin:0;padding:16px;border-bottom:1px solid #eadfd2}.stock-table table{width:100%;border-collapse:collapse}.stock-table th,.stock-table td{padding:10px;border-bottom:1px solid #f0e7dc;text-align:left;font-size:13px;vertical-align:top}.stock-table th{background:#fff8ef;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#5d4a38}.badge-ok,.badge-alert,.badge-watch,.badge-out{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900}.badge-ok{background:#e4f4eb;color:#23573a}.badge-alert{background:#fff1d9;color:#694a16}.badge-watch{background:#edf0f7;color:#40516f}.badge-out{background:#fbe6e1;color:#81483f}.stock-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.stock-links a{padding:9px 12px;border:1px solid #eadfd2;border-radius:999px;text-decoration:none;color:#6e563a;font-weight:900;background:#fff}.stock-empty{padding:14px;color:#7a6a5c}@media(max-width:1100px){.stock-hero,.stock-grid{grid-template-columns:1fr}.stock-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.stock-kpis{grid-template-columns:1fr}}
 </style>
-<section class="stock-demo">
+<section class="stock-cockpit">
   <div class="stock-hero">
-    <p class="eyebrow">Exploitation</p>
-    <h1>Stocks produits</h1>
-    <p>Suivi des quantites, seuils minimum, entrees, sorties, pertes et alertes. Cette page permet de montrer la logique de pilotage interne de l'institut.</p>
+    <article class="stock-panel gold">
+      <p class="eyebrow">Cockpit exploitation</p>
+      <h1>Gestion intelligente des stocks</h1>
+      <p>Suivez les produits, les seuils, les mouvements, les pertes, la valeur estimee et la consommation par prestation. Objectif : anticiper les ruptures et mieux piloter les achats.</p>
+      <div class="stock-links"><a href="{{ url_for('stocks.consumptions') }}">Consommations par prestation</a><a href="#stock-table">Etat des stocks</a><a href="#movements">Derniers mouvements</a></div>
+    </article>
+    <aside class="stock-panel stock-health">
+      <span>Sante stock</span>
+      <strong>{% if products|length == 0 %}-{% else %}{{ ((products|length - low_products|length) * 100 // products|length) }}%{% endif %}</strong>
+      <p>{{ low_products|length }} produit(s) sous seuil. Couverture prestations : {{ treatment_coverage }}%.</p>
+    </aside>
   </div>
 
   <div class="stock-kpis">
-    <article class="stock-kpi"><span>Produits suivis</span><strong>{{ products|length }}</strong></article>
-    <article class="stock-kpi"><span>Alertes seuil</span><strong>{{ low_products|length }}</strong></article>
-    <article class="stock-kpi"><span>Historique recent</span><strong>{{ movements|length }}</strong></article>
+    <article class="stock-kpi"><span>Produits suivis</span><strong>{{ products|length }}</strong><small>Catalogue stock actif</small></article>
+    <article class="stock-kpi"><span>Valeur estimee</span><strong>{{ '%.0f'|format(stock_value) }} €</strong><small>Selon dernier cout renseigne</small></article>
+    <article class="stock-kpi"><span>Sorties 30 jours</span><strong>{{ '%.1f'|format(recent_outputs) }}</strong><small>Consommations, pertes et ajustements</small></article>
+    <article class="stock-kpi"><span>Pertes 30 jours</span><strong>{{ '%.1f'|format(recent_losses) }}</strong><small>A surveiller en exploitation</small></article>
   </div>
 
   <div class="stock-grid">
@@ -21,44 +30,55 @@
       <h2>Ajouter un produit</h2>
       <form method="post">
         <input name="name" placeholder="Nom du produit" required>
-        <input name="unit" value="ml" placeholder="Unite">
+        <input name="unit" value="ml" placeholder="Unite : ml, g, piece...">
         <input name="quantity" type="number" step="0.1" placeholder="Quantite actuelle">
         <input name="alert_threshold" type="number" step="0.1" placeholder="Seuil minimum">
-        <button>Ajouter le produit</button>
+        <button>Ajouter au stock</button>
       </form>
     </section>
 
     <section class="stock-card">
-      <h2>Mouvement de stock</h2>
+      <h2>Entrer un mouvement</h2>
       <form method="post" action="{{ url_for('stocks.movement') }}">
         <select name="product_id">{% for p in products %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select>
-        <select name="movement_type"><option value="in">Entree</option><option value="out">Sortie</option><option value="loss">Perte</option><option value="adjustment">Ajustement positif</option></select>
+        <select name="movement_type"><option value="in">Entree fournisseur</option><option value="out">Sortie / utilisation</option><option value="loss">Perte / casse</option><option value="adjustment">Ajustement positif</option></select>
         <input name="quantity" type="number" step="0.1" placeholder="Quantite">
         <input name="unit_cost" type="number" step="0.01" placeholder="Cout unitaire">
-        <input name="reason" placeholder="Motif">
+        <input name="reason" placeholder="Motif : achat, soin, inventaire...">
         <button>Valider le mouvement</button>
       </form>
     </section>
   </div>
 
-  <section class="stock-table">
+  <section class="stock-card">
+    <h2>Priorites de reassort</h2>
+    <div class="priority-list">
+      {% for row in reorder_priority[:6] %}
+      <div class="priority-item"><div><b>{{ row.product.name }}</b><small>{{ row.product.quantity }} {{ row.product.unit }} en stock · seuil {{ row.product.alert_threshold }} {{ row.product.unit }}</small></div><span class="badge-{{ row.status_class }}">{{ row.status_label }}</span></div>
+      {% else %}
+      <div class="stock-empty">Aucune priorite de reassort pour le moment.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="stock-table" id="stock-table">
     <h2>Etat des stocks</h2>
     <table>
-      <tr><th>Produit</th><th>Stock</th><th>Seuil</th><th>Statut</th></tr>
-      {% for p in products %}
-      <tr><td>{{ p.name }}</td><td>{{ p.quantity }} {{ p.unit }}</td><td>{{ p.alert_threshold }} {{ p.unit }}</td><td>{% if p.quantity <= p.alert_threshold %}<span class="badge-alert">Alerte</span>{% else %}<span class="badge-ok">OK</span>{% endif %}</td></tr>
+      <tr><th>Produit</th><th>Stock</th><th>Seuil</th><th>Couverture</th><th>Cout unitaire</th><th>Valeur</th><th>Prestations liees</th><th>Statut</th></tr>
+      {% for row in stock_rows %}
+      <tr><td><b>{{ row.product.name }}</b></td><td>{{ row.product.quantity }} {{ row.product.unit }}</td><td>{{ row.product.alert_threshold }} {{ row.product.unit }}</td><td>{% if row.coverage_ratio %}{{ row.coverage_ratio }} x seuil{% else %}-{% endif %}</td><td>{{ '%.2f'|format(row.unit_cost) }} €</td><td>{{ '%.2f'|format(row.stock_value) }} €</td><td>{{ row.consumption_count }}</td><td><span class="badge-{{ row.status_class }}">{{ row.status_label }}</span></td></tr>
       {% else %}
-      <tr><td colspan="4">Aucun produit.</td></tr>
+      <tr><td colspan="8">Aucun produit.</td></tr>
       {% endfor %}
     </table>
   </section>
 
-  <section class="stock-table">
+  <section class="stock-table" id="movements">
     <h2>Derniers mouvements</h2>
     <table>
-      <tr><th>Date</th><th>Produit</th><th>Type</th><th>Quantite</th><th>Cout</th><th>Motif</th></tr>
+      <tr><th>Date</th><th>Produit</th><th>Type</th><th>Quantite</th><th>Cout total</th><th>Motif</th></tr>
       {% for m in movements %}
-      <tr><td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ m.product.name }}</td><td>{{ m.movement_type }}</td><td>{{ m.quantity }}</td><td>{{ m.total_cost }}</td><td>{{ m.reason }}</td></tr>
+      <tr><td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</td><td>{{ m.product.name }}</td><td>{{ m.movement_type }}</td><td>{{ m.quantity }}</td><td>{{ '%.2f'|format(m.total_cost) }} €</td><td>{{ m.reason }}</td></tr>
       {% else %}
       <tr><td colspan="6">Aucun mouvement.</td></tr>
       {% endfor %}
