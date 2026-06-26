@@ -1,1 +1,38 @@
-{% extends 'base.html' %}{% block content %}<link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}"><section class="booking-shell"><div class="booking-head"><p class="eyebrow">Reservation</p><h1>Choisissez votre institut et votre soin</h1><p class="muted">Selectionnez un institut puis la prestation souhaitee. Les prochaines etapes afficheront les praticiennes, les jours et les horaires disponibles.</p><div class="booking-progress"><span class="active">1. Prestation</span><span>2. Jour</span><span>3. Horaire</span><span>4. Confirmation</span></div></div><form method="get" class="booking-card inline-form"><select name="institute_id"><option value="">Tous les instituts</option>{% for i in institutes %}<option value="{{i.id}}" {% if selected_institute_id==i.id %}selected{% endif %}>{{i.name}}</option>{% endfor %}</select><button>Filtrer</button></form><div class="treatment-grid">{% for t in treatments %}<article class="client-card"><span>{{t.category}}</span><h3>{{t.name}}</h3><p>{{t.institute.name if t.institute else ''}}</p><p>{{t.duration_minutes}} min</p><p class="price">{{'%.0f'|format(t.price)}} euros</p><a class="btn" href="{{ url_for('booking.month_calendar', treatment_id=t.id) }}">Choisir ce soin</a></article>{% else %}<article class="client-card"><h3>Aucune prestation</h3><p>Aucune prestation active pour cet institut.</p></article>{% endfor %}</div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/client.css') }}">
+<section class="booking-shell">
+  <div class="booking-head">
+    <p class="eyebrow">Reservation en ligne</p>
+    <h1>Choisissez votre moment de bien-etre</h1>
+    <p class="muted">Selectionnez un institut puis une prestation. Le site calcule ensuite les disponibilites selon les praticiennes formees, les cabines et le planning interne.</p>
+    <div class="booking-progress"><span class="active">1. Prestation</span><span>2. Jour</span><span>3. Horaire</span><span>4. Confirmation</span></div>
+  </div>
+
+  <form method="get" class="booking-card inline-form">
+    <select name="institute_id">
+      <option value="">Tous les instituts</option>
+      {% for i in institutes %}<option value="{{ i.id }}" {% if selected_institute_id==i.id %}selected{% endif %}>{{ i.name }}</option>{% endfor %}
+    </select>
+    <button>Filtrer les prestations</button>
+  </form>
+
+  <div class="treatment-grid">
+    {% for t in treatments %}
+    <article class="client-card">
+      <span>{{ t.category }}</span>
+      <h3>{{ t.name }}</h3>
+      <p>{{ t.institute.name if t.institute else 'Tous les instituts' }}</p>
+      <p>{{ t.duration_minutes }} min · Organisation cabine automatique</p>
+      <p class="price">{{ '%.0f'|format(t.price) }} euros</p>
+      <a class="btn" href="{{ url_for('booking.month_calendar', treatment_id=t.id) }}">Voir les disponibilites</a>
+    </article>
+    {% else %}
+    <article class="client-card">
+      <h3>Aucune prestation disponible</h3>
+      <p>Aucune prestation active pour cet institut. Essayez de retirer le filtre.</p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
