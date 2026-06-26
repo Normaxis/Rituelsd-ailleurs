@@ -20,6 +20,7 @@
     <input type="hidden" name="view" value="{{ selected_view }}">
     <input type="hidden" name="action" value="save_week_table">
     <input type="hidden" name="week_start" value="{{ week_start.isoformat() }}">
+    <input type="hidden" name="csrf_token" value="{{ planning_csrf_token }}">
     <div class="week-toolbar" style="padding:0 0 14px!important;border:0!important;background:transparent!important">
       <div><label>Appliquer cette grille sur</label><input type="number" name="week_count" value="1" min="1" max="12"></div>
       <span class="week-note">Permet de planifier plusieurs semaines à l’avance avec le même modèle. Les exceptions restent modifiables semaine par semaine.</span>
