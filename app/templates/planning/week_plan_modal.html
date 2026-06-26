@@ -1,7 +1,7 @@
 <div class="week-plan-backdrop" id="weekPlanBackdrop"></div>
 <aside class="week-plan-modal" id="weekPlanModal" aria-hidden="true">
   <div class="week-plan-head">
-    <div><p class="eyebrow">Planification hebdomadaire</p><h2>Planifier la semaine</h2><span>{{ week_start.strftime('%d/%m/%Y') }} - {{ (week_start + timedelta(days=6)).strftime('%d/%m/%Y') }}</span></div>
+    <div><p class="eyebrow">Planification hebdomadaire</p><h2>Planifier la semaine</h2><span>{{ week_days[0].date.strftime('%d/%m/%Y') }} - {{ week_days[6].date.strftime('%d/%m/%Y') }}</span></div>
     <button type="button" class="week-plan-close" id="weekPlanClose">×</button>
   </div>
 
