@@ -33,7 +33,7 @@ class User(db.Model):
 
     @property
     def full_name(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.first_name} {self.last_name}".strip()
 
 class Treatment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
