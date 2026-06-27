@@ -174,10 +174,13 @@ def cabin_scan(cabin_id):
 
     if request.method == 'POST':
         user = _user_from_code(request.form.get('agent_ref'))
-        routine = Routine.query.get_or_404(int(request.form.get('routine_id')))
-        step_ids = [int(value) for value in request.form.getlist('step_ids')]
+        routine_value = request.form.get('routine_id') or (request.form.getlist('routine_ids') or [''])[0]
+        routine = Routine.query.get_or_404(int(routine_value))
         steps = _steps_for_routine(routine)
         required_ids = {step.id for step in steps if getattr(step, 'id', None) and step.is_required}
+        step_ids = [int(value) for value in request.form.getlist('step_ids')]
+        if not step_ids:
+            step_ids = list(required_ids)
         if not user:
             error = 'Code routine invalide.'
         elif required_ids and not required_ids.issubset(set(step_ids)):
