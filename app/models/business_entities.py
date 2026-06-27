@@ -142,6 +142,17 @@ class RoutineStep(db.Model):
     routine = db.relationship('Routine', backref='steps')
 
 
+class RoutineStepCheck(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    completion_id = db.Column(db.Integer, db.ForeignKey('routine_completion.id'), nullable=False)
+    step_id = db.Column(db.Integer, db.ForeignKey('routine_step.id'), nullable=False)
+    checked = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completion = db.relationship('RoutineCompletion', backref='step_checks')
+    step = db.relationship('RoutineStep')
+    __table_args__ = (db.UniqueConstraint('completion_id', 'step_id', name='uniq_routine_step_check'),)
+
+
 class RoutineReferencePhoto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     routine_id = db.Column(db.Integer, db.ForeignKey('routine.id'), nullable=False)
