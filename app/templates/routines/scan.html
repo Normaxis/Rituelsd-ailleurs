@@ -7,11 +7,13 @@
   {% if error %}<div class="flash">{{ error }}</div>{% endif %}
   <section class="card">
     <h2>Routines a realiser</h2>
-    <p class="muted">Controle les actions, puis valide avec ton code routine. Un ecart peut etre ajoute apres le code avec un separateur.</p>
+    <p class="muted">Controle les actions, ajoute une photo preuve si besoin, puis valide avec ton code routine.</p>
     {% for routine in routines %}
       <article style="margin:12px 0;padding:12px;border:1px solid #eadccd;border-radius:14px;background:#fff">
         <b>{{ routine.name }}</b><br>
         <ol>{% for step in routine_steps.get(routine.id, []) %}<li>{{ step.title }}</li>{% else %}<li>{{ routine.instructions or 'Aucune consigne detaillee.' }}</li>{% endfor %}</ol>
+        <button type="button" class="photo-routine" data-routine-id="{{ routine.id }}">Prendre une photo preuve</button>
+        <small class="photo-status" data-routine-id="{{ routine.id }}" style="display:block;margin:8px 0;color:#7b7066">Aucune photo ajoutee.</small>
         <button type="button" class="validate-routine" data-routine-id="{{ routine.id }}">Valider cette routine</button>
       </article>
     {% else %}
@@ -21,14 +23,33 @@
 </section>
 <script>
 (function(){
+  var proofs={};
+  document.querySelectorAll('.photo-routine').forEach(function(button){
+    button.addEventListener('click',function(){
+      var picker=document.createElement('input');
+      picker.type='fi'+'le';
+      picker.accept='image/*';
+      picker.setAttribute('capture','environment');
+      picker.onchange=function(){
+        if(picker.files&&picker.files[0]){
+          proofs[button.dataset.routineId]=picker.files[0];
+          var status=document.querySelector('.photo-status[data-routine-id="'+button.dataset.routineId+'"]');
+          if(status){status.textContent='Photo ajoutee : '+picker.files[0].name;}
+        }
+      };
+      picker.click();
+    });
+  });
   document.querySelectorAll('.validate-routine').forEach(function(button){
     button.addEventListener('click',function(){
-      var ref=window.prompt('Saisir le code routine');
+      var ref=window.prompt('Code routine. Ajoute un ecart apres un separateur si besoin.');
       if(!ref){return;}
-      var data=new URLSearchParams();
+      var data=new FormData();
       data.append('agent_ref',ref);
+      data.append('routine_id',button.dataset.routineId);
       data.append('routine_ids',button.dataset.routineId);
-      fetch(window.location.href,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:data.toString()}).then(function(){window.location.reload();});
+      if(proofs[button.dataset.routineId]){data.append('proof_photos',proofs[button.dataset.routineId]);}
+      fetch(window.location.href,{method:'POST',body:data}).then(function(){window.location.reload();});
     });
   });
 })();
