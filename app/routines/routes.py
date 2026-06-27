@@ -1,6 +1,6 @@
 import base64
 import io
-from datetime import date
+from datetime import date, datetime, timedelta
 
 import qrcode
 from flask import Blueprint, render_template, request, redirect, url_for
@@ -11,6 +11,8 @@ from app.models import Routine, Cabin, User, RoutineCompletion
 from app.utils.auth import login_required
 
 routines_bp = Blueprint('routines', __name__)
+WEEK_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+MONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre']
 
 
 def _user_from_code(code):
@@ -39,6 +41,73 @@ def _qr_items(cabins):
     return items
 
 
+def _week_start(day):
+    return day - timedelta(days=day.weekday())
+
+
+def _week_days(day):
+    start = _week_start(day)
+    return [{'date': start + timedelta(days=index), 'label': WEEK_LABELS[index], 'number': (start + timedelta(days=index)).day, 'is_today': start + timedelta(days=index) == day} for index in range(7)]
+
+
+def _routine_scope_key(routine):
+    return routine.cabin_id or 0
+
+
+def _completion_map(start_day, end_day):
+    completions = RoutineCompletion.query.filter(RoutineCompletion.completed_on >= start_day, RoutineCompletion.completed_on <= end_day).all()
+    mapped = {}
+    for item in completions:
+        key = (item.routine_id, item.cabin_id or 0, item.completed_on)
+        mapped.setdefault(key, []).append(item)
+    return mapped, completions
+
+
+def _routine_cards(routines, start_day, days):
+    mapped, completions = _completion_map(start_day, start_day + timedelta(days=len(days) - 1))
+    cards = []
+    total_expected = 0
+    total_done = 0
+    total_late = 0
+    for routine in routines:
+        scope_key = _routine_scope_key(routine)
+        day_stats = []
+        for day in days:
+            is_weekend = day['date'].weekday() >= 5
+            key = (routine.id, scope_key, day['date'])
+            done_items = mapped.get(key, [])
+            if done_items:
+                color = 'green'
+                label = '1/1'
+                total_done += 1
+            elif is_weekend:
+                color = 'gray'
+                label = '-'
+            elif day['date'] < date.today():
+                color = 'red'
+                label = '0/1'
+                total_late += 1
+            else:
+                color = 'orange'
+                label = '0/1'
+            if not is_weekend:
+                total_expected += 1
+            day_stats.append({'date': day['date'], 'label': label, 'color': color, 'done': bool(done_items), 'items': done_items})
+        done_weekdays = sum(1 for item in day_stats[:5] if item['done'])
+        rate = round((done_weekdays / 5) * 100) if day_stats else 0
+        cards.append({'routine': routine, 'day_stats': day_stats, 'rate': rate})
+    pending = max(total_expected - total_done - total_late, 0)
+    summary = {'total': total_expected, 'done': total_done, 'pending': pending, 'late': total_late, 'completion_rate': round((total_done / total_expected) * 100) if total_expected else 0}
+    return cards, summary, completions
+
+
+def _parse_report_date(value, fallback):
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').date() if value else fallback
+    except ValueError:
+        return fallback
+
+
 @routines_bp.route('/', methods=['GET','POST'])
 @login_required
 def index():
@@ -50,8 +119,26 @@ def index():
         db.session.commit()
         return redirect(url_for('routines.index'))
 
+    today = date.today()
+    days = _week_days(today)
+    routines = Routine.query.order_by(Routine.name).all()
+    cards, summary, completions = _routine_cards(routines, _week_start(today), days)
     cabins = Cabin.query.order_by(Cabin.name).all()
-    return render_template('routines/index.html', routines=Routine.query.order_by(Routine.name).all(), cabins=cabins, qr_items=_qr_items(cabins))
+    return render_template('routines/index.html', routines=routines, routine_cards=cards, cabins=cabins, qr_items=_qr_items(cabins), week_days=days, summary=summary, completions=completions, calendar_label=MONTHS[today.month - 1] + ' ' + str(today.year), week_number=today.isocalendar().week)
+
+
+@routines_bp.route('/rapport')
+@login_required
+def report():
+    today = date.today()
+    start_day = _parse_report_date(request.args.get('start'), _week_start(today))
+    end_day = _parse_report_date(request.args.get('end'), start_day + timedelta(days=6))
+    if end_day < start_day:
+        end_day = start_day
+    days = [{'date': start_day + timedelta(days=index), 'label': WEEK_LABELS[(start_day + timedelta(days=index)).weekday()], 'number': (start_day + timedelta(days=index)).day, 'is_today': start_day + timedelta(days=index) == today} for index in range((end_day - start_day).days + 1)]
+    routines = Routine.query.order_by(Routine.name).all()
+    cards, summary, completions = _routine_cards(routines, start_day, days)
+    return render_template('routines/report.html', start_day=start_day, end_day=end_day, routine_cards=cards, summary=summary, completions=completions, days=days, generated_at=datetime.now())
 
 
 @routines_bp.route('/cabine/<int:cabin_id>/scan', methods=['GET','POST'])
