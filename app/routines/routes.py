@@ -14,13 +14,10 @@ routines_bp = Blueprint('routines', __name__)
 
 
 def _user_from_code(code):
-    value = (code or '').strip()
-    if not value:
+    value = ''.join(char for char in (code or '') if char.isdigit())
+    if len(value) != 6:
         return None
-    for user in User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all():
-        if user.check_password(value):
-            return user
-    return None
+    return User.query.filter_by(is_active=True, routine_code=value).first()
 
 
 def _qr_data_uri(url):
@@ -72,7 +69,7 @@ def cabin_scan(cabin_id):
         user = _user_from_code(reference)
         selected_ids = [int(value) for value in request.form.getlist('routine_ids')]
         if not user:
-            error = 'Code invalide.'
+            error = 'Code routine invalide.'
         elif not selected_ids:
             error = 'Selectionne au moins une routine a valider.'
         else:
