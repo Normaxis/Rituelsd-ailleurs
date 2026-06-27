@@ -57,14 +57,6 @@ def index():
     return render_template('routines/index.html', routines=Routine.query.order_by(Routine.name).all(), cabins=cabins, qr_items=_qr_items(cabins))
 
 
-@routines_bp.route('/qr-cabines')
-@login_required
-def qr_cabins():
-    cabins = Cabin.query.order_by(Cabin.name).all()
-    completions = RoutineCompletion.query.filter_by(completed_on=date.today()).order_by(RoutineCompletion.created_at.desc()).all()
-    return render_template('routines/qr_cabins.html', qr_items=_qr_items(cabins), completions=completions)
-
-
 @routines_bp.route('/cabine/<int:cabin_id>/scan', methods=['GET','POST'])
 def cabin_scan(cabin_id):
     cabin = Cabin.query.get_or_404(cabin_id)
