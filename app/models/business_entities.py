@@ -117,6 +117,21 @@ class TreatmentConsumption(db.Model):
     __table_args__ = (db.UniqueConstraint('treatment_id', 'product_id', name='uniq_treatment_product_consumption'),)
 
 
+class RoutineCompletion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    routine_id = db.Column(db.Integer, db.ForeignKey('routine.id'), nullable=False)
+    cabin_id = db.Column(db.Integer, db.ForeignKey('cabin.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    completed_on = db.Column(db.Date, default=date.today, nullable=False)
+    status = db.Column(db.String(40), default='done')
+    note = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    routine = db.relationship('Routine')
+    cabin = db.relationship('Cabin')
+    user = db.relationship('User')
+    __table_args__ = (db.UniqueConstraint('routine_id', 'cabin_id', 'user_id', 'completed_on', name='uniq_routine_completion_day'),)
+
+
 class DocumentRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(180), nullable=False)
