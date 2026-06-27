@@ -38,6 +38,18 @@ def _qr_data_uri(url):
     return 'data:image/png;base64,' + payload
 
 
+def _qr_items(cabins):
+    items = []
+    for cabin in cabins:
+        scan_url = url_for('routines.cabin_scan', cabin_id=cabin.id, _external=True)
+        items.append({'cabin': cabin, 'url': scan_url, 'qr': _qr_data_uri(scan_url)})
+    return items
+
+
+def _staff_codes():
+    return [{'user': user, 'code': _staff_code(user)} for user in User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()]
+
+
 @routines_bp.route('/', methods=['GET','POST'])
 @login_required
 def index():
@@ -50,12 +62,15 @@ def index():
         return redirect(url_for('routines.index'))
 
     cabins = Cabin.query.order_by(Cabin.name).all()
-    qr_items = []
-    for cabin in cabins:
-        scan_url = url_for('routines.cabin_scan', cabin_id=cabin.id, _external=True)
-        qr_items.append({'cabin': cabin, 'url': scan_url, 'qr': _qr_data_uri(scan_url)})
-    staff_codes = [{'user': user, 'code': _staff_code(user)} for user in User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()]
-    return render_template('routines/index.html', routines=Routine.query.order_by(Routine.name).all(), cabins=cabins, qr_items=qr_items, staff_codes=staff_codes)
+    return render_template('routines/index.html', routines=Routine.query.order_by(Routine.name).all(), cabins=cabins, qr_items=_qr_items(cabins), staff_codes=_staff_codes())
+
+
+@routines_bp.route('/qr-cabines')
+@login_required
+def qr_cabins():
+    cabins = Cabin.query.order_by(Cabin.name).all()
+    completions = RoutineCompletion.query.filter_by(completed_on=date.today()).order_by(RoutineCompletion.created_at.desc()).all()
+    return render_template('routines/qr_cabins.html', qr_items=_qr_items(cabins), staff_codes=_staff_codes(), completions=completions)
 
 
 @routines_bp.route('/cabine/<int:cabin_id>/scan', methods=['GET','POST'])
@@ -69,10 +84,11 @@ def cabin_scan(cabin_id):
     error = None
 
     if request.method == 'POST':
-        user = _user_from_code(request.form.get('staff_code'))
+        reference = request.form.get('staff_code') or request.form.get('agent_ref')
+        user = _user_from_code(reference)
         selected_ids = [int(value) for value in request.form.getlist('routine_ids')]
         if not user:
-            error = 'Code personnel invalide. Le code doit contenir 6 chiffres.'
+            error = 'Reference equipe invalide.'
         elif not selected_ids:
             error = 'Selectionne au moins une routine a valider.'
         else:
