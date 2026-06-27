@@ -1,50 +1,17 @@
 {% extends 'admin/base_admin.html' %}
 {% block admin_content %}
 <style>
-.report{display:grid;gap:18px}.hero{background:#fff;border:1px solid #eadfd2;border-radius:22px;padding:22px}.hero h1{margin:0;font-size:34px;letter-spacing:-.04em}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.actions a,.actions button{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:10px 14px;font-weight:900}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.kpi{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px}.kpi span{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.kpi strong{display:block;font-size:22px;margin-top:5px}.card{background:#fff;border:1px solid #eadfd2;border-radius:20px;padding:16px}.status{display:inline-flex;border-radius:999px;padding:7px 10px;background:#22c55e;color:#fff;font-weight:900}.steps{display:grid;gap:8px}.step{border:1px solid #eadfd2;border-radius:14px;padding:12px;background:#fffaf5}.signature{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sign-box{border:1px dashed #cbb8a3;border-radius:16px;padding:18px;min-height:90px}@media print{.sidebar,.actions{display:none}.admin-body{display:block}.admin-main{padding:0}.card,.hero,.kpi{break-inside:avoid}}
+.report{display:grid;gap:18px}.hero{background:#fff;border:1px solid #eadfd2;border-radius:22px;padding:22px}.hero h1{margin:0;font-size:34px;letter-spacing:-.04em}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.actions a,.actions button{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:10px 14px;font-weight:900}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.kpi{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px}.kpi span{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.kpi strong{display:block;font-size:22px;margin-top:5px}.card{background:#fff;border:1px solid #eadfd2;border-radius:20px;padding:16px}.status{display:inline-flex;border-radius:999px;padding:7px 10px;background:#22c55e;color:#fff;font-weight:900}.steps{display:grid;gap:8px}.step{border:1px solid #eadfd2;border-radius:14px;padding:12px;background:#fffaf5}.thumbs{display:flex;gap:10px;flex-wrap:wrap}.thumbs img{width:140px;height:110px;object-fit:cover;border-radius:14px;border:1px solid #eadfd2}.issue{border-left:5px solid #ef4444;background:#fff5f5;border-radius:14px;padding:12px;margin:8px 0}.signature{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sign-box{border:1px dashed #cbb8a3;border-radius:16px;padding:18px;min-height:90px}@media print{.sidebar,.actions{display:none}.admin-body{display:block}.admin-main{padding:0}.card,.hero,.kpi{break-inside:avoid}}
 </style>
 <section class="report">
-  <div class="hero">
-    <p class="eyebrow">Rapport de routine realisee</p>
-    <h1>{{ validation.routine.name }}</h1>
-    <p class="muted">Rapport genere a partir d'une validation reelle scannee en cabine.</p>
-    <div class="actions"><a href="{{ url_for('routines.index') }}">Retour routines</a><button onclick="window.print()">Imprimer / PDF</button></div>
-  </div>
-
-  <div class="kpis">
-    <article class="kpi"><span>Statut</span><strong><span class="status">Realisee</span></strong></article>
-    <article class="kpi"><span>Date de realisation</span><strong>{{ validation.completed_on.strftime('%d/%m/%Y') }}</strong></article>
-    <article class="kpi"><span>Heure</span><strong>{{ validation.created_at.strftime('%H:%M') }}</strong></article>
-    <article class="kpi"><span>Personne</span><strong>{{ validation.user.full_name }}</strong></article>
-  </div>
-
-  <section class="card">
-    <h2>Informations de validation</h2>
-    <table>
-      <tr><th>Routine</th><td>{{ validation.routine.name }}</td></tr>
-      <tr><th>Perimetre</th><td>{{ validation.cabin.name if validation.cabin else 'Institut' }}</td></tr>
-      <tr><th>Validee par</th><td>{{ validation.user.full_name }}</td></tr>
-      <tr><th>Date / heure</th><td>{{ validation.completed_on.strftime('%d/%m/%Y') }} a {{ validation.created_at.strftime('%H:%M') }}</td></tr>
-      <tr><th>Statut</th><td>Routine realisee</td></tr>
-      <tr><th>Commentaire</th><td>{{ validation.note or '-' }}</td></tr>
-    </table>
-  </section>
-
-  <section class="card">
-    <h2>Etapes de la routine</h2>
-    <div class="steps">
-      {% for step in steps %}<div class="step">✓ {{ step }}</div>{% else %}<div class="step">✓ Routine validee sans etapes detaillees.</div>{% endfor %}
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>Conclusion</h2>
-    <p>La routine <b>{{ validation.routine.name }}</b> a ete declaree realisee par <b>{{ validation.user.full_name }}</b> sur le perimetre <b>{{ validation.cabin.name if validation.cabin else 'Institut' }}</b>. Ce rapport constitue la preuve de realisation pour cette routine precise.</p>
-  </section>
-
-  <section class="card signature">
-    <div class="sign-box"><b>Validation terrain</b><br>{{ validation.user.full_name }}<br>{{ validation.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
-    <div class="sign-box"><b>Visa direction</b><br><br></div>
-  </section>
+  <div class="hero"><p class="eyebrow">Rapport de routine realisee</p><h1>{{ validation.routine.name }}</h1><p class="muted">Rapport genere a partir d'une validation reelle.</p><div class="actions"><a href="{{ url_for('routines.index') }}">Retour routines</a><button onclick="window.print()">Imprimer / PDF</button></div></div>
+  <div class="kpis"><article class="kpi"><span>Statut</span><strong><span class="status">Realisee</span></strong></article><article class="kpi"><span>Date</span><strong>{{ validation.completed_on.strftime('%d/%m/%Y') }}</strong></article><article class="kpi"><span>Heure</span><strong>{{ validation.created_at.strftime('%H:%M') }}</strong></article><article class="kpi"><span>Personne</span><strong>{{ validation.user.full_name }}</strong></article></div>
+  <section class="card"><h2>Informations</h2><table><tr><th>Routine</th><td>{{ validation.routine.name }}</td></tr><tr><th>Perimetre</th><td>{{ validation.cabin.name if validation.cabin else 'Institut' }}</td></tr><tr><th>Validee par</th><td>{{ validation.user.full_name }}</td></tr><tr><th>Date / heure</th><td>{{ validation.completed_on.strftime('%d/%m/%Y') }} a {{ validation.created_at.strftime('%H:%M') }}</td></tr><tr><th>Commentaire</th><td>{{ validation.note or '-' }}</td></tr></table></section>
+  <section class="card"><h2>Actions cochees</h2><div class="steps">{% for check in validation.step_checks %}<div class="step">✓ {{ check.step.title }}</div>{% else %}{% for step in steps %}<div class="step">✓ {{ step.title }}</div>{% else %}<div class="step">Routine validee sans action detaillee.</div>{% endfor %}{% endfor %}</div></section>
+  <section class="card"><h2>References attendues</h2><div class="thumbs">{% for photo in validation.routine.reference_photos %}<img src="{{ url_for('routines.reference_photo', photo_id=photo.id) }}">{% else %}<p class="muted">Aucune reference associee.</p>{% endfor %}</div></section>
+  <section class="card"><h2>Elements constates</h2><div class="thumbs">{% for photo in validation.proof_photos %}<img src="{{ url_for('routines.proof_photo', photo_id=photo.id) }}">{% else %}<p class="muted">Aucun element joint.</p>{% endfor %}</div></section>
+  <section class="card"><h2>Problemes signales</h2>{% for issue in validation.issues %}<div class="issue"><b>{{ issue.title }}</b><br>{{ issue.description or '-' }}<br><small>Gravite : {{ issue.severity }} · Statut : {{ issue.status }}</small></div>{% else %}<p>Aucun probleme declare pendant cette routine.</p>{% endfor %}</section>
+  <section class="card"><h2>Conclusion</h2><p>La routine <b>{{ validation.routine.name }}</b> a ete declaree realisee par <b>{{ validation.user.full_name }}</b> sur le perimetre <b>{{ validation.cabin.name if validation.cabin else 'Institut' }}</b>. Ce rapport constitue la preuve de realisation pour cette validation precise.</p></section>
+  <section class="card signature"><div class="sign-box"><b>Validation terrain</b><br>{{ validation.user.full_name }}<br>{{ validation.created_at.strftime('%d/%m/%Y %H:%M') }}</div><div class="sign-box"><b>Visa direction</b><br><br></div></section>
 </section>
 {% endblock %}
