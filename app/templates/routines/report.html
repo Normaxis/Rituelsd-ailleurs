@@ -1,55 +1,50 @@
 {% extends 'admin/base_admin.html' %}
 {% block admin_content %}
 <style>
-.report{display:grid;gap:18px}.report-hero{background:#fff;border:1px solid #eadfd2;border-radius:22px;padding:22px}.report-hero h1{margin:0;font-size:34px;letter-spacing:-.04em}.report-actions{display:flex;gap:10px;flex-wrap:wrap}.report-actions a,.report-actions button{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:10px 14px;font-weight:900}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.kpi{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px}.kpi span{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.kpi strong{display:block;font-size:30px;margin-top:5px}.card{background:#fff;border:1px solid #eadfd2;border-radius:20px;padding:16px}.matrix{overflow:auto}.matrix table{box-shadow:none}.pill{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:11px;font-weight:900}.green{background:#22c55e;color:#fff}.orange{background:#f97316;color:#fff}.red{background:#ef4444;color:#fff}.gray{background:#f8fafc;color:#6b7280}@media print{.sidebar,.report-actions{display:none}.admin-body{display:block}.admin-main{padding:0}.card,.report-hero,.kpi{break-inside:avoid}}
+.report{display:grid;gap:18px}.hero{background:#fff;border:1px solid #eadfd2;border-radius:22px;padding:22px}.hero h1{margin:0;font-size:34px;letter-spacing:-.04em}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.actions a,.actions button{border:1px solid #e5e7eb;border-radius:12px;background:#fff;padding:10px 14px;font-weight:900}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.kpi{background:#fff;border:1px solid #eadfd2;border-radius:18px;padding:16px}.kpi span{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6a;font-weight:900}.kpi strong{display:block;font-size:22px;margin-top:5px}.card{background:#fff;border:1px solid #eadfd2;border-radius:20px;padding:16px}.status{display:inline-flex;border-radius:999px;padding:7px 10px;background:#22c55e;color:#fff;font-weight:900}.steps{display:grid;gap:8px}.step{border:1px solid #eadfd2;border-radius:14px;padding:12px;background:#fffaf5}.signature{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sign-box{border:1px dashed #cbb8a3;border-radius:16px;padding:18px;min-height:90px}@media print{.sidebar,.actions{display:none}.admin-body{display:block}.admin-main{padding:0}.card,.hero,.kpi{break-inside:avoid}}
 </style>
 <section class="report">
-  <div class="report-hero">
-    <p class="eyebrow">Rapport routines</p>
-    <h1>Suivi des routines terrain</h1>
-    <p class="muted">Periode du {{ start_day.strftime('%d/%m/%Y') }} au {{ end_day.strftime('%d/%m/%Y') }} · Genere le {{ generated_at.strftime('%d/%m/%Y a %H:%M') }}</p>
-    <div class="report-actions"><a href="{{ url_for('routines.index') }}">Retour routines</a><button onclick="window.print()">Imprimer / PDF</button></div>
+  <div class="hero">
+    <p class="eyebrow">Rapport de routine realisee</p>
+    <h1>{{ validation.routine.name }}</h1>
+    <p class="muted">Rapport genere a partir d'une validation reelle scannee en cabine.</p>
+    <div class="actions"><a href="{{ url_for('routines.index') }}">Retour routines</a><button onclick="window.print()">Imprimer / PDF</button></div>
   </div>
 
   <div class="kpis">
-    <article class="kpi"><span>Taux de realisation</span><strong>{{ summary.completion_rate }}%</strong></article>
-    <article class="kpi"><span>Total attendu</span><strong>{{ summary.total }}</strong></article>
-    <article class="kpi"><span>Realisees</span><strong>{{ summary.done }}</strong></article>
-    <article class="kpi"><span>En retard</span><strong>{{ summary.late }}</strong></article>
+    <article class="kpi"><span>Statut</span><strong><span class="status">Realisee</span></strong></article>
+    <article class="kpi"><span>Date de realisation</span><strong>{{ validation.completed_on.strftime('%d/%m/%Y') }}</strong></article>
+    <article class="kpi"><span>Heure</span><strong>{{ validation.created_at.strftime('%H:%M') }}</strong></article>
+    <article class="kpi"><span>Personne</span><strong>{{ validation.user.full_name }}</strong></article>
   </div>
 
-  <section class="card matrix">
-    <h2>Synthese par routine</h2>
+  <section class="card">
+    <h2>Informations de validation</h2>
     <table>
-      <tr><th>Routine</th><th>Perimetre</th>{% for day in days %}<th>{{ day.date.strftime('%d/%m') }}</th>{% endfor %}<th>Taux</th></tr>
-      {% for card in routine_cards %}
-      <tr>
-        <td><b>{{ card.routine.name }}</b></td>
-        <td>{{ card.routine.cabin.name if card.routine.cabin else 'Institut' }}</td>
-        {% for item in card.day_stats %}<td><span class="pill {{ item.color }}">{{ item.label }}</span></td>{% endfor %}
-        <td><b>{{ card.rate }}%</b></td>
-      </tr>
-      {% else %}
-      <tr><td colspan="10">Aucune routine parametree.</td></tr>
-      {% endfor %}
+      <tr><th>Routine</th><td>{{ validation.routine.name }}</td></tr>
+      <tr><th>Perimetre</th><td>{{ validation.cabin.name if validation.cabin else 'Institut' }}</td></tr>
+      <tr><th>Validee par</th><td>{{ validation.user.full_name }}</td></tr>
+      <tr><th>Date / heure</th><td>{{ validation.completed_on.strftime('%d/%m/%Y') }} a {{ validation.created_at.strftime('%H:%M') }}</td></tr>
+      <tr><th>Statut</th><td>Routine realisee</td></tr>
+      <tr><th>Commentaire</th><td>{{ validation.note or '-' }}</td></tr>
     </table>
   </section>
 
   <section class="card">
-    <h2>Validations detaillees</h2>
-    <table>
-      <tr><th>Date</th><th>Heure</th><th>Routine</th><th>Cabine</th><th>Personne</th><th>Commentaire</th></tr>
-      {% for item in completions %}
-      <tr><td>{{ item.completed_on.strftime('%d/%m/%Y') }}</td><td>{{ item.created_at.strftime('%H:%M') }}</td><td>{{ item.routine.name }}</td><td>{{ item.cabin.name if item.cabin else '-' }}</td><td>{{ item.user.full_name }}</td><td>{{ item.note or '-' }}</td></tr>
-      {% else %}
-      <tr><td colspan="6">Aucune validation sur la periode.</td></tr>
-      {% endfor %}
-    </table>
+    <h2>Etapes de la routine</h2>
+    <div class="steps">
+      {% for step in steps %}<div class="step">✓ {{ step }}</div>{% else %}<div class="step">✓ Routine validee sans etapes detaillees.</div>{% endfor %}
+    </div>
   </section>
 
   <section class="card">
-    <h2>Conclusion automatique</h2>
-    {% if summary.completion_rate >= 90 %}<p>Le niveau de realisation des routines est satisfaisant sur la periode. Le suivi terrain est maitrise.</p>{% elif summary.completion_rate >= 60 %}<p>Le suivi des routines est partiellement maitrise. Des rappels doivent etre effectues sur les routines non realisees ou en retard.</p>{% else %}<p>Le taux de realisation est insuffisant. Une action de pilotage est necessaire afin de fiabiliser les routines terrain.</p>{% endif %}
+    <h2>Conclusion</h2>
+    <p>La routine <b>{{ validation.routine.name }}</b> a ete declaree realisee par <b>{{ validation.user.full_name }}</b> sur le perimetre <b>{{ validation.cabin.name if validation.cabin else 'Institut' }}</b>. Ce rapport constitue la preuve de realisation pour cette routine precise.</p>
+  </section>
+
+  <section class="card signature">
+    <div class="sign-box"><b>Validation terrain</b><br>{{ validation.user.full_name }}<br>{{ validation.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+    <div class="sign-box"><b>Visa direction</b><br><br></div>
   </section>
 </section>
 {% endblock %}
