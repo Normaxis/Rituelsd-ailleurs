@@ -7,14 +7,30 @@
   {% if error %}<div class="flash">{{ error }}</div>{% endif %}
   <section class="card">
     <h2>Routines a realiser</h2>
+    <p class="muted">Ouvre chaque routine, realise les etapes, puis valide avant de demarrer.</p>
     {% for routine in routines %}
       <article style="margin:12px 0;padding:12px;border:1px solid #eadccd;border-radius:14px;background:#fff">
         <b>{{ routine.name }}</b><br>
-        <small class="muted">{{ routine.instructions or 'Aucune consigne detaillee.' }}</small>
+        <small class="muted" style="white-space:pre-line">{{ routine.instructions or 'Aucune consigne detaillee.' }}</small><br><br>
+        <button type="button" class="validate-routine" data-routine-id="{{ routine.id }}">Valider cette routine</button>
       </article>
     {% else %}
       <p class="muted">Aucune routine associee a cette cabine.</p>
     {% endfor %}
   </section>
 </section>
+<script>
+(function(){
+  document.querySelectorAll('.validate-routine').forEach(function(button){
+    button.addEventListener('click',function(){
+      var ref=window.prompt('Saisir la reference equipe');
+      if(!ref){return;}
+      var data=new URLSearchParams();
+      data.append('agent_ref',ref);
+      data.append('routine_ids',button.dataset.routineId);
+      fetch(window.location.href,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:data.toString()}).then(function(){window.location.reload();});
+    });
+  });
+})();
+</script>
 {% endblock %}
