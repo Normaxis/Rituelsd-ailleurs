@@ -18,10 +18,20 @@ MAX_PHOTO_BYTES = 3 * 1024 * 1024
 
 
 def _user_from_code(code):
-    value = ''.join(char for char in (code or '') if char.isdigit())
+    value = ''.join(char for char in (code or '') if char.isdigit())[:6]
     if len(value) != 6:
         return None
     return User.query.filter_by(is_active=True, routine_code=value).first()
+
+
+def _issue_from_code_text(code_text):
+    raw = code_text or ''
+    for separator in ['|', '-', ':']:
+        if separator in raw:
+            value = raw.split(separator, 1)[1].strip()
+            if value and not value.isdigit():
+                return value[:180]
+    return ''
 
 
 def _qr_data_uri(url):
@@ -173,7 +183,8 @@ def cabin_scan(cabin_id):
     error = None
 
     if request.method == 'POST':
-        user = _user_from_code(request.form.get('agent_ref'))
+        raw_reference = request.form.get('agent_ref') or ''
+        user = _user_from_code(raw_reference)
         routine_value = request.form.get('routine_id') or (request.form.getlist('routine_ids') or [''])[0]
         routine = Routine.query.get_or_404(int(routine_value))
         steps = _steps_for_routine(routine)
@@ -199,11 +210,11 @@ def cabin_scan(cabin_id):
                 photo = _store_photo(uploaded, completion, 'proof')
                 if photo:
                     db.session.add(photo)
-            issue_title = request.form.get('issue_title','').strip()
+            issue_title = request.form.get('issue_title','').strip() or _issue_from_code_text(raw_reference)
             if issue_title:
-                issue = RoutineIssue(completion_id=completion.id, title=issue_title, description=request.form.get('issue_description',''), severity=request.form.get('issue_severity','medium'))
+                issue = RoutineIssue(completion_id=completion.id, title=issue_title, description=request.form.get('issue_description','') or issue_title, severity=request.form.get('issue_severity','medium'))
                 db.session.add(issue)
-                db.session.add(QSEAction(source='Routine', theme='Exploitation', title=issue_title, description='Probleme detecte pendant la routine : ' + (request.form.get('issue_description','') or routine.name), responsible=user.full_name, status='open'))
+                db.session.add(QSEAction(source='Routine', theme='Exploitation', title=issue_title, description='Probleme detecte pendant la routine : ' + (request.form.get('issue_description','') or issue_title), responsible=user.full_name, status='open'))
             db.session.commit()
             message = 'Routine validee. Les preuves et problemes eventuels sont enregistres.'
             completions = RoutineCompletion.query.filter_by(cabin_id=cabin.id, completed_on=today).all()
