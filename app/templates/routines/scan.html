@@ -2,6 +2,19 @@
 {% block content %}
 <section class="page">
   <h1>Routines cabine</h1>
-  <p>{{ cabin.name }}</p>
+  <p class="muted">{{ cabin.name }} - {{ today.strftime('%d/%m/%Y') }}</p>
+  {% if message %}<div class="flash">{{ message }}</div>{% endif %}
+  {% if error %}<div class="flash">{{ error }}</div>{% endif %}
+  <section class="card">
+    <h2>Routines a realiser</h2>
+    {% for routine in routines %}
+      <article style="margin:12px 0;padding:12px;border:1px solid #eadccd;border-radius:14px;background:#fff">
+        <b>{{ routine.name }}</b><br>
+        <small class="muted">{{ routine.instructions or 'Aucune consigne detaillee.' }}</small>
+      </article>
+    {% else %}
+      <p class="muted">Aucune routine associee a cette cabine.</p>
+    {% endfor %}
+  </section>
 </section>
 {% endblock %}
