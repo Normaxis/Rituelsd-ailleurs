@@ -30,6 +30,10 @@ def user_photo_ids():
     return {photo.user_id: photo.id for photo in UserPhoto.query.all()}
 
 
+def clean_routine_code(value):
+    return ''.join(char for char in (value or '') if char.isdigit())[:6]
+
+
 @hr_bp.route('/')
 @login_required
 def dashboard():
@@ -46,14 +50,33 @@ def dashboard():
 @login_required
 def personnel():
     if request.method == 'POST':
+        routine_code = clean_routine_code(request.form.get('routine_code'))
         user = User(first_name=request.form['first_name'], last_name=request.form['last_name'], username=request.form['username'], role_id=int(request.form['role_id']), institute_id=int(request.form['institute_id']) if request.form.get('institute_id') else None, is_active=True)
         user.set_password(request.form.get('password') or 'rituels123')
+        user.routine_code = routine_code
         db.session.add(user)
         db.session.commit()
+        if not user.routine_code:
+            user.routine_code = str(100000 + user.id)[-6:]
+            db.session.commit()
         flash('Salarie ajoute.', 'success')
         return redirect(url_for('hr.personnel'))
     users = User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()
     return render_template('hr/personnel.html', users=users, roles=Role.query.all(), institutes=Institute.query.all(), cabins=Cabin.query.order_by(Cabin.name).all(), user_base_schedules=WeeklyUserSchedule.query.order_by(WeeklyUserSchedule.user_id, WeeklyUserSchedule.weekday, WeeklyUserSchedule.start_time).all(), user_week_schedules=user_week_schedule_map(), user_photo_ids=user_photo_ids(), cabin_base_schedules=WeeklyCabinSchedule.query.order_by(WeeklyCabinSchedule.cabin_id, WeeklyCabinSchedule.weekday, WeeklyCabinSchedule.start_time).all(), weekdays=WEEKDAYS)
+
+
+@hr_bp.route('/personnel/routine-code', methods=['POST'])
+@login_required
+def save_routine_code():
+    user = User.query.get_or_404(int(request.form['user_id']))
+    routine_code = clean_routine_code(request.form.get('routine_code'))
+    if len(routine_code) != 6:
+        flash('Le code routine doit contenir 6 chiffres.', 'error')
+        return redirect(url_for('hr.personnel', user_id=user.id))
+    user.routine_code = routine_code
+    db.session.commit()
+    flash('Code routine mis a jour.', 'success')
+    return redirect(url_for('hr.personnel', user_id=user.id))
 
 
 @hr_bp.route('/personnel/photo/<int:user_id>')
