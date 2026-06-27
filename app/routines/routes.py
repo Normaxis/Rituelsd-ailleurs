@@ -93,7 +93,12 @@ def _steps_for_routine(routine):
     if steps:
         return steps
     lines = [line.strip() for line in (routine.instructions or '').splitlines() if line.strip()]
-    return [RoutineStep(routine_id=routine.id, position=index + 1, title=line) for index, line in enumerate(lines)]
+    for index, line in enumerate(lines):
+        db.session.add(RoutineStep(routine_id=routine.id, position=index + 1, title=line, is_required=True))
+    if lines:
+        db.session.commit()
+        return sorted(list(routine.steps), key=lambda item: item.position or 0)
+    return []
 
 
 def _store_photo(uploaded, target, kind='proof'):
