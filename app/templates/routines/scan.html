@@ -23,7 +23,7 @@
 (function(){
   document.querySelectorAll('.validate-routine').forEach(function(button){
     button.addEventListener('click',function(){
-      var ref=window.prompt('Saisir le code de connexion');
+      var ref=window.prompt('Saisir le code routine');
       if(!ref){return;}
       var data=new URLSearchParams();
       data.append('agent_ref',ref);
