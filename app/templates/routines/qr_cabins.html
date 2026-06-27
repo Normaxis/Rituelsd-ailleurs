@@ -1,0 +1,13 @@
+{% extends 'admin/base_admin.html' %}
+{% block admin_content %}
+<h1>QR codes cabines</h1>
+<div class="grid cards">
+  {% for item in qr_items %}
+  <article class="card">
+    <img src="{{ item.qr }}" alt="QR" style="width:160px;height:160px">
+    <h3>{{ item.cabin.name }}</h3>
+    <p class="muted">{{ item.url }}</p>
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}
