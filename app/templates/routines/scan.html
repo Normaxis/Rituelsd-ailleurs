@@ -7,11 +7,11 @@
   {% if error %}<div class="flash">{{ error }}</div>{% endif %}
   <section class="card">
     <h2>Routines a realiser</h2>
-    <p class="muted">Ouvre chaque routine, realise les etapes, puis valide avant de demarrer.</p>
+    <p class="muted">Controle les actions, puis valide avec ton code routine.</p>
     {% for routine in routines %}
       <article style="margin:12px 0;padding:12px;border:1px solid #eadccd;border-radius:14px;background:#fff">
         <b>{{ routine.name }}</b><br>
-        <small class="muted" style="white-space:pre-line">{{ routine.instructions or 'Aucune consigne detaillee.' }}</small><br><br>
+        <ol>{% for step in routine_steps.get(routine.id, []) %}<li>{{ step.title }}</li>{% else %}<li>{{ routine.instructions or 'Aucune consigne detaillee.' }}</li>{% endfor %}</ol>
         <button type="button" class="validate-routine" data-routine-id="{{ routine.id }}">Valider cette routine</button>
       </article>
     {% else %}
