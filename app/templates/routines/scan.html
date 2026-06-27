@@ -7,7 +7,7 @@
   {% if error %}<div class="flash">{{ error }}</div>{% endif %}
   <section class="card">
     <h2>Routines a realiser</h2>
-    <p class="muted">Controle les actions, puis valide avec ton code routine.</p>
+    <p class="muted">Controle les actions, puis valide avec ton code routine. Un ecart peut etre ajoute apres le code avec un separateur.</p>
     {% for routine in routines %}
       <article style="margin:12px 0;padding:12px;border:1px solid #eadccd;border-radius:14px;background:#fff">
         <b>{{ routine.name }}</b><br>
