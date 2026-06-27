@@ -132,6 +132,53 @@ class RoutineCompletion(db.Model):
     __table_args__ = (db.UniqueConstraint('routine_id', 'cabin_id', 'user_id', 'completed_on', name='uniq_routine_completion_day'),)
 
 
+class RoutineStep(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    routine_id = db.Column(db.Integer, db.ForeignKey('routine.id'), nullable=False)
+    position = db.Column(db.Integer, default=1)
+    title = db.Column(db.String(180), nullable=False)
+    detail = db.Column(db.Text, default='')
+    is_required = db.Column(db.Boolean, default=True)
+    routine = db.relationship('Routine', backref='steps')
+
+
+class RoutineReferencePhoto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    routine_id = db.Column(db.Integer, db.ForeignKey('routine.id'), nullable=False)
+    title = db.Column(db.String(160), default='Reference')
+    filename = db.Column(db.String(180), default='')
+    mime_type = db.Column(db.String(80), default='image/jpeg')
+    image_data = db.Column(db.LargeBinary, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    routine = db.relationship('Routine', backref='reference_photos')
+
+
+class RoutineProofPhoto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    completion_id = db.Column(db.Integer, db.ForeignKey('routine_completion.id'), nullable=False)
+    step_id = db.Column(db.Integer, db.ForeignKey('routine_step.id'))
+    kind = db.Column(db.String(40), default='proof')
+    filename = db.Column(db.String(180), default='')
+    mime_type = db.Column(db.String(80), default='image/jpeg')
+    image_data = db.Column(db.LargeBinary, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completion = db.relationship('RoutineCompletion', backref='proof_photos')
+    step = db.relationship('RoutineStep')
+
+
+class RoutineIssue(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    completion_id = db.Column(db.Integer, db.ForeignKey('routine_completion.id'), nullable=False)
+    step_id = db.Column(db.Integer, db.ForeignKey('routine_step.id'))
+    title = db.Column(db.String(180), nullable=False)
+    description = db.Column(db.Text, default='')
+    severity = db.Column(db.String(40), default='medium')
+    status = db.Column(db.String(40), default='open')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completion = db.relationship('RoutineCompletion', backref='issues')
+    step = db.relationship('RoutineStep')
+
+
 class DocumentRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(180), nullable=False)
