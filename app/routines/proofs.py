@@ -1,7 +1,7 @@
 from flask import Blueprint, redirect, request, url_for
 
 from app.extensions import db
-from app.models import RoutineCompletion, RoutineProofPhoto
+from app.models import RoutineCompletion, RoutineProofLink, RoutineProofPhoto
 from app.utils.auth import login_required
 
 routine_proofs_bp = Blueprint('routine_proofs', __name__)
@@ -13,6 +13,9 @@ MAX_PHOTO_BYTES = 3 * 1024 * 1024
 @login_required
 def add(validation_id):
     validation = RoutineCompletion.query.get_or_404(validation_id)
+    proof_url = (request.form.get('proof_url') or '').strip()
+    if proof_url:
+        db.session.add(RoutineProofLink(completion_id=validation.id, title='Preuve', url=proof_url, note=request.form.get('note') or ''))
     for uploaded in request.files.getlist('proof_photos'):
         if not uploaded or not uploaded.filename or uploaded.mimetype not in ALLOWED_PHOTO_TYPES:
             continue
