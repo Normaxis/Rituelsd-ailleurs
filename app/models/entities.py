@@ -19,6 +19,7 @@ class User(db.Model):
     last_name = db.Column(db.String(100), nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    routine_code = db.Column(db.String(6), default='')
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=False)
     institute_id = db.Column(db.Integer, db.ForeignKey('institute.id'))
     is_active = db.Column(db.Boolean, default=True)
