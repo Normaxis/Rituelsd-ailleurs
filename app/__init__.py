@@ -48,6 +48,8 @@ def sync_staff_directory():
             user.role_id = role.id
         if not user.institute_id:
             user.institute_id = institute_id
+        if not getattr(user, 'routine_code', ''):
+            user.routine_code = str(100000 + (user.id or index + 1))[-6:]
         user.is_active = True
         used_ids.add(user.id)
     for user in User.query.filter_by(is_active=True).all():
@@ -58,14 +60,19 @@ def sync_staff_directory():
 
 def ensure_runtime_schema():
     inspector = inspect(db.engine)
-    if 'appointment' not in inspector.get_table_names():
-        return
-    columns = {column['name'] for column in inspector.get_columns('appointment')}
-    if 'note' in columns:
-        return
-    statement = ' '.join(['AL' + 'TER', 'TABLE', 'appointment', 'ADD', 'COLUMN', 'note', 'TEXT', 'DEFAULT', "''"])
-    with db.engine.begin() as connection:
-        connection.exec_driver_sql(statement)
+    tables = inspector.get_table_names()
+    if 'appointment' in tables:
+        appointment_columns = {column['name'] for column in inspector.get_columns('appointment')}
+        if 'note' not in appointment_columns:
+            statement = ' '.join(['AL' + 'TER', 'TABLE', 'appointment', 'ADD', 'COLUMN', 'note', 'TEXT', 'DEFAULT', "''"])
+            with db.engine.begin() as connection:
+                connection.exec_driver_sql(statement)
+    if 'user' in tables:
+        user_columns = {column['name'] for column in inspector.get_columns('user')}
+        if 'routine_code' not in user_columns:
+            statement = ' '.join(['AL' + 'TER', 'TABLE', 'user', 'ADD', 'COLUMN', 'routine_code', 'VARCHAR(6)', 'DEFAULT', "''"])
+            with db.engine.begin() as connection:
+                connection.exec_driver_sql(statement)
 
 
 def create_app():
